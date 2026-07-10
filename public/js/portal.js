@@ -1382,8 +1382,11 @@ const App = (() => {
       toast('URL aplikasi belum dikonfigurasi.', 'error');
       return;
     }
-    const url = appUrl + (appUrl.includes('?') ? '&' : '?') + 'token=' + _token + '&appId=' + appId;
-    window.open(url, '_blank');
+    // Set cookie untuk single sign-on cross-app di origin yang sama
+    document.cookie = "gaspol_token=" + _token + "; path=/; max-age=86400; secure; samesite=strict";
+    
+    // Buka app tanpa parameter di URL
+    window.open(appUrl, '_blank');
   }
 
   function togglePassword(inputId, iconEl) {
