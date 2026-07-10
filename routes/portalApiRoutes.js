@@ -23,7 +23,10 @@ const authController = require('../controllers/authController');
 // ══════════════════════════════════════════════════════════════
 
 router.post('/action', async (req, res) => {
-  const { action, token } = req.body;
+  const { action } = req.body;
+  
+  const authHeader = req.headers.authorization;
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.split(' ')[1] : req.body.token;
 
   if (!action) {
     return res.status(400).json({ success: false, error: 'Action tidak disertakan.' });

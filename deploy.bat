@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (echo GAGAL mengunggah! & exit /b 1)
 
 echo.
 echo [3/4] Mengeksekusi di server: extract, install deps, start PM2...
-ssh -i "%SSH_KEY%" %SSH_OPTS% %REMOTE% "cd /home/opc/GASPOL-V2 && tar -xzvf gaspol-v2-deploy.tar.gz && npm install --production && (pm2 describe GASPOL-V2 > /dev/null 2>&1 && pm2 restart GASPOL-V2 || pm2 start server.js --name GASPOL-V2 -- --env production) && pm2 save"
+ssh -i "%SSH_KEY%" %SSH_OPTS% %REMOTE% "cd /home/opc/GASPOL-V2 && tar -xzvf gaspol-v2-deploy.tar.gz && npm install --production && (pm2 describe GASPOL-V2 > /dev/null 2>&1 && pm2 restart GASPOL-V2 || pm2 start server.js --name GASPOL-V2 -i max -- --env production) && pm2 save"
 if %errorlevel% neq 0 (echo GAGAL eksekusi remote! & exit /b 1)
 
 echo.
