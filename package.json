@@ -1,0 +1,25 @@
+{
+  "name": "gaspol-v2",
+  "version": "2.0.0",
+  "description": "GASPOL V2 — Full-stack Portal SSO BPMP Kalimantan Tengah",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/auth-compat.test.js"
+  },
+  "keywords": ["gaspol", "sso", "bpmp", "kalteng"],
+  "author": "BPMP Kalimantan Tengah",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "mysql2": "^3.22.5",
+    "node-cron": "^3.0.3"
+  }
+}

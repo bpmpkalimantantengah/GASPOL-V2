@@ -1,0 +1,54 @@
+168-110-208-72.nip.io {
+    # ── GASPOL V2 Portal (port 4000) ──────────────────
+    handle /portal* {
+        reverse_proxy localhost:4000
+    }
+    handle /api/portal* {
+        reverse_proxy localhost:4000
+    }
+    handle /auth* {
+        reverse_proxy localhost:4000
+    }
+    handle /health {
+        reverse_proxy localhost:4000
+    }
+    handle /css/* {
+        reverse_proxy localhost:4000
+    }
+    handle /js/portal.js {
+        reverse_proxy localhost:4000
+    }
+
+    # ── WA Sender + Child Apps (port 3000) ────────────
+    handle {
+        reverse_proxy localhost:3000
+    }
+}
+
+# ── Akses via IP langsung (tanpa SSL) ────────────────
+:80 {
+    # GASPOL V2 Portal
+    handle /portal* {
+        reverse_proxy localhost:4000
+    }
+    handle /api/portal* {
+        reverse_proxy localhost:4000
+    }
+    handle /auth* {
+        reverse_proxy localhost:4000
+    }
+    handle /health {
+        reverse_proxy localhost:4000
+    }
+    handle /css/* {
+        reverse_proxy localhost:4000
+    }
+    handle /js/portal.js {
+        reverse_proxy localhost:4000
+    }
+
+    # WA Sender + Child Apps
+    handle {
+        reverse_proxy localhost:3000
+    }
+}
