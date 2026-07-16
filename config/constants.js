@@ -36,7 +36,13 @@ const APP_STATUS = {
 
 // ── Konfigurasi SSO ─────────────────────────────────────────
 const SSO_CONFIG = {
-  secretKey            : process.env.SSO_SECRET_KEY || 'gaspol-secret-2024',
+  secretKey: process.env.SSO_SECRET_KEY || (() => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[FATAL] SSO_SECRET_KEY wajib diset di .env untuk production!');
+    }
+    console.warn('[WARNING] SSO_SECRET_KEY tidak diset. Menggunakan nilai default (TIDAK AMAN untuk production).');
+    return 'gaspol-secret-dev-only';
+  })(),
   sessionDurationHours : parseInt(process.env.SESSION_DURATION_HOURS || '8'),
   maxLoginAttempts     : parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5'),
   lockoutMinutes       : parseInt(process.env.LOCKOUT_DURATION_MINUTES || '30'),

@@ -336,16 +336,17 @@ exports.bulkResetPassword = async (req, res) => {
       `SELECT userId, username FROM ${TABLES.USERS} WHERE userId IN (?)`, [userIds]
     );
 
-    let count = 0;
-    for (const u of users) {
+    const promises = users.map(u => {
       const pwd = u.username + '12345';
       const salt = generateSalt();
-      await portalPool.query(
+      return portalPool.query(
         `UPDATE ${TABLES.USERS} SET passwordHash = ?, salt = ?, updatedAt = ? WHERE userId = ?`,
         [hashPassword(pwd, salt), salt, formatDate(new Date()), u.userId]
       );
-      count++;
-    }
+    });
+    
+    await Promise.all(promises);
+    const count = users.length;
 
     await _writeAuditLog(caller.userId, caller.user.username, 'BULK_RESET_PASSWORD', '', `Bulk reset: ${count} users`, 'SUCCESS');
     return success(res, { reset: count });

@@ -50,7 +50,8 @@ async function validateTokenFromDB(token, appId) {
 
     // 1. Cari session
     const [sessions] = await portalPool.query(
-      `SELECT * FROM ${TABLES.SESSIONS} WHERE token = ? LIMIT 1`, [token]
+      `SELECT token, userId, appId, isValid, expiresAt, lastActivity
+       FROM ${TABLES.SESSIONS} WHERE token = ? LIMIT 1`, [token]
     );
     const session = sessions[0];
     if (!session) return { valid: false, error: 'Token tidak ditemukan.' };
@@ -63,7 +64,8 @@ async function validateTokenFromDB(token, appId) {
 
     // 2. Cari user
     const [users] = await portalPool.query(
-      `SELECT * FROM ${TABLES.USERS} WHERE userId = ? LIMIT 1`, [session.userId]
+      `SELECT userId, username, email, fullName, role, status, whatsapp, lastLogin, createdAt, updatedAt
+       FROM ${TABLES.USERS} WHERE userId = ? LIMIT 1`, [session.userId]
     );
     const user = users[0];
     if (!user) return { valid: false, error: 'User tidak ditemukan.' };

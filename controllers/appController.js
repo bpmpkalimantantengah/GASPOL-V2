@@ -276,21 +276,25 @@ exports.bulkUpdateUserAccess = async (req, res) => {
     const { userIds, appAccesses, replace } = req.body;
     if (!userIds || !Array.isArray(userIds)) return error(res, 'userIds wajib array.', 400);
 
-    let updated = 0;
-    for (const uid of userIds) {
-      if (replace) {
-        await portalPool.query(`DELETE FROM ${TABLES.APP_ACCESS} WHERE userId = ?`, [uid]);
-      }
-      if (appAccesses && Array.isArray(appAccesses) && appAccesses.length > 0) {
+    if (replace && userIds.length > 0) {
+      await portalPool.query(`DELETE FROM ${TABLES.APP_ACCESS} WHERE userId IN (?)`, [userIds]);
+    }
+
+    if (appAccesses && Array.isArray(appAccesses) && appAccesses.length > 0 && userIds.length > 0) {
+      const values = [];
+      for (const uid of userIds) {
         for (const a of appAccesses) {
-          await portalPool.query(
-            `INSERT IGNORE INTO ${TABLES.APP_ACCESS} (accessId, userId, appId, appRole, grantedAt, grantedBy) VALUES (?, ?, ?, ?, ?, ?)`,
-            [generateUuid(), uid, a.appId, a.appRole || 'user', formatDate(new Date()), caller.userId]
-          );
+          values.push([generateUuid(), uid, a.appId, a.appRole || 'user', formatDate(new Date()), caller.userId]);
         }
       }
-      updated++;
+      if (values.length > 0) {
+        await portalPool.query(
+          `INSERT IGNORE INTO ${TABLES.APP_ACCESS} (accessId, userId, appId, appRole, grantedAt, grantedBy) VALUES ?`,
+          [values]
+        );
+      }
     }
+    const updated = userIds.length;
 
     await _writeAuditLog(caller.userId, caller.user.username, 'BULK_UPDATE_ACCESS', '', `Bulk update akses: ${updated} users`, 'SUCCESS');
     return success(res, { updated });

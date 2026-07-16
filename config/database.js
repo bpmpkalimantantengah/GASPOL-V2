@@ -14,7 +14,7 @@ const portalPool = mysql.createPool({
   password: process.env.DB_PORTAL_PASSWORD || '',
   database: process.env.DB_PORTAL_NAME || 'gaspol_portal',
   waitForConnections: true,
-  connectionLimit: 150,
+  connectionLimit: 30,
   queueLimit: 0,
   dateStrings: true,
   // Timezone WITA
@@ -28,37 +28,14 @@ const evaluasiPool = mysql.createPool({
   password: process.env.DB_EVALUASI_PASSWORD || '',
   database: process.env.DB_EVALUASI_NAME || 'bpmp_evaluasi',
   waitForConnections: true,
-  connectionLimit: 50,
+  connectionLimit: 15,
   queueLimit: 0,
   dateStrings: true,
   timezone: '+08:00',
 });
 
-// ── Pool Database Cendekia ──────────────────────────────────
-const cendekiaPool = mysql.createPool({
-  host: process.env.DB_CENDEKIA_HOST || 'localhost',
-  user: process.env.DB_CENDEKIA_USER || 'root',
-  password: process.env.DB_CENDEKIA_PASSWORD || '',
-  database: process.env.DB_CENDEKIA_NAME || 'bpmp_cendekia',
-  waitForConnections: true,
-  connectionLimit: 30,
-  queueLimit: 0,
-  dateStrings: true,
-  timezone: '+08:00',
-});
+// Pool cendekia & hubMitra dihapus — belum ada controller yang menggunakan
 
-// ── Pool Database Hub Mitra ─────────────────────────────────
-const hubMitraPool = mysql.createPool({
-  host: process.env.DB_HUBMITRA_HOST || 'localhost',
-  user: process.env.DB_HUBMITRA_USER || 'root',
-  password: process.env.DB_HUBMITRA_PASSWORD || '',
-  database: process.env.DB_HUBMITRA_NAME || 'bpmp_hub_mitra',
-  waitForConnections: true,
-  connectionLimit: 30,
-  queueLimit: 0,
-  dateStrings: true,
-  timezone: '+08:00',
-});
 
 // ── Pool Database PPKPSP ────────────────────────────────────
 const ppkpspPool = mysql.createPool({
@@ -67,7 +44,7 @@ const ppkpspPool = mysql.createPool({
   password: process.env.DB_PPKPSP_PASSWORD || '',
   database: process.env.DB_PPKPSP_NAME || 'gaspol_ppkpsp',
   waitForConnections: true,
-  connectionLimit: 20,
+  connectionLimit: 10,
   queueLimit: 0,
   dateStrings: true,
   timezone: '+08:00',
@@ -76,7 +53,5 @@ const ppkpspPool = mysql.createPool({
 module.exports = {
   portalPool,
   evaluasiPool,
-  cendekiaPool,
-  hubMitraPool,
   ppkpspPool,
 };
