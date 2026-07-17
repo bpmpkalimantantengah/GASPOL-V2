@@ -589,16 +589,17 @@ const App = (() => {
         <td>${u.username}</td>
         <td>${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</td>
         <td style="font-size:12px;">${u.instansi || '<span style="color:var(--text3)">—</span>'}</td>
-        <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}</td>
-        <td style="font-size:12px;">${u.bentuk_pendidikan || 'Semua Bentuk'}</td>
-        <td><span class="role-badge role-${u.role.toLowerCase().replace('_','-')}">${u.role}</span></td>
+        <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}<br><span style="color:var(--text3);font-size:11px;">${u.bentuk_pendidikan || 'Semua Bentuk'}</span></td>
         <td>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="status-badge ${u.status === 'ACTIVE' ? 'status-active' : 'status-inactive'}">${u.status}</span>
-            ${u.isDefaultPassword ? '<span style="color:var(--danger);font-size:16px;display:flex;align-items:center;"><i class="ti ti-alert-triangle"></i></span>' : '<span style="color:var(--success);font-size:16px;display:flex;align-items:center;"><i class="ti ti-shield-check"></i></span>'}
+          <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+            <span class="role-badge role-${u.role.toLowerCase().replace('_','-')}">${u.role}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="status-badge ${u.status === 'ACTIVE' ? 'status-active' : 'status-inactive'}">${u.status}</span>
+              ${u.isDefaultPassword ? '<span style="color:var(--danger);font-size:14px;display:flex;align-items:center;" title="Password bawaan"><i class="ti ti-alert-triangle"></i></span>' : '<span style="color:var(--success);font-size:14px;display:flex;align-items:center;" title="Password sudah diubah"><i class="ti ti-shield-check"></i></span>'}
+            </div>
           </div>
         </td>
-        <td style="white-space:nowrap;font-size:11px;color:var(--text);line-height:1.4;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? u.apps.join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
+        <td style="font-size:11px;color:var(--text);line-height:1.4;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? u.apps.join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
         <td style="font-size:11px;color:var(--text3);">${formatDateID(u.lastLogin)}</td>
         <td><div class="actions">
           ${isProtectedTarget ? '' : `
