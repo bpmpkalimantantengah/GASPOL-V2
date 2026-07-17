@@ -506,6 +506,8 @@ const App = (() => {
   let _usersPerPage = 10;
   let _usersRoleFilter = 'ALL';
   let _usersInstansiFilter = 'ALL';
+  let _usersJenjangFilter = 'ALL';
+  let _usersBentukFilter = 'ALL';
   let _usersAppFilter = 'ALL';
   let _usersSearchQuery = '';
 
@@ -580,6 +582,7 @@ const App = (() => {
         <td>${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</td>
         <td style="font-size:12px;">${u.instansi || '<span style="color:var(--text3)">—</span>'}</td>
         <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}</td>
+        <td style="font-size:12px;">${u.bentuk_pendidikan || 'Semua Bentuk'}</td>
         <td><span class="role-badge role-${u.role.toLowerCase().replace('_','-')}">${u.role}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -1441,7 +1444,7 @@ const App = (() => {
   return {
     toggleSidebar, init, login, logout, loginWithGoogle, showView, showForgotPassword,
     adminTab, filterAdminApps,
-    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersAppFilter, setUsersPerPage, setUsersPage,
+    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersJenjangFilter, setUsersBentukFilter, setUsersAppFilter, setUsersPerPage, setUsersPage,
     showCreateUserModal, showRegisterAppModal, closeModal,
     createUser, registerApp, changePassword, editUser, saveEditUser,
     deleteUser, resetUserPassword, refresh, togglePassword,

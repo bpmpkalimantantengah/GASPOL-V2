@@ -277,6 +277,30 @@
         <div class="admin-toolbar" style="flex-wrap: wrap; gap: 10px;">
           <div class="flex gap-8 items-center" style="flex-wrap:wrap; flex:1;">
             <div class="search-wrap" style="flex:1; min-width:200px;"><i class="ti ti-search"></i><input class="search-input" type="text" oninput="App.setUsersSearch(this.value)" id="inp-search-user"/></div>
+            
+            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersJenjangFilter(this.value)" id="filter-user-jenjang">
+              <option value="ALL">Semua Jenjang</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+              <option value="SMK">SMK</option>
+              <option value="SLB">SLB</option>
+              <option value="PAUD">PAUD</option>
+            </select>
+            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersBentukFilter(this.value)" id="filter-user-bentuk">
+              <option value="ALL">Semua Bentuk</option>
+              <option value="KB">KB</option>
+              <option value="PKBM">PKBM</option>
+              <option value="SD">SD</option>
+              <option value="SKB">SKB</option>
+              <option value="SLB">SLB</option>
+              <option value="SMA">SMA</option>
+              <option value="SMK">SMK</option>
+              <option value="SMP">SMP</option>
+              <option value="SPS">SPS</option>
+              <option value="TK">TK</option>
+              <option value="TPA">TPA</option>
+            </select>
             <select class="form-input" style="width:150px; padding:8px 12px;" onchange="App.setUsersInstansiFilter(this.value)" id="filter-user-instansi"><option value="ALL">Semua Instansi</option><option value="BPMP">BPMP</option><option value="Dinas Pendidikan">Dinas Pendidikan</option><option value="Pengawas Sekolah">Pengawas Sekolah</option><option value="Satuan Pendidikan">Satuan Pendidikan</option></select>
             <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersRoleFilter(this.value)" id="filter-user-role"><option value="ALL">Semua Role</option><option value="SUPER_ADMIN">Super Admin</option><option value="ADMIN">Admin</option><option value="USER">User</option></select>
             <select class="form-input" style="width:150px; padding:8px 12px;" onchange="App.setUsersAppFilter(this.value)" id="filter-user-app"><option value="ALL">Semua Aplikasi</option></select>
@@ -298,9 +322,9 @@
             <thead><tr>
               <th style="width:40px;text-align:center;"><input type="checkbox" id="cb-all-users" onchange="App.toggleAllUsers(this.checked)" /></th>
               <th>Nama Lengkap</th><th>Username</th><th>Email / WhatsApp</th>
-              <th>Instansi</th><th>Jenjang</th><th>Role</th><th>Status</th><th style="white-space:nowrap;">Akses Aplikasi</th><th style="width:120px;">Login Terakhir</th><th>Aksi</th>
+              <th>Instansi</th><th>Jenjang</th><th>Bentuk</th><th>Role</th><th>Status</th><th style="white-space:nowrap;">Akses Aplikasi</th><th style="width:120px;">Login Terakhir</th><th>Aksi</th>
             </tr></thead>
-            <tbody id="users-tbody"><tr><td colspan="11" style="text-align:center;color:var(--text3);padding:24px;">Memuat...</td></tr></tbody>
+            <tbody id="users-tbody"><tr><td colspan="12" style="text-align:center;color:var(--text3);padding:24px;">Memuat...</td></tr></tbody>
           </table>
         </div>
         <div id="users-pagination" class="flex items-center gap-8 mt-16" style="justify-content: flex-end;"></div>
