@@ -885,6 +885,15 @@ const App = (() => {
       <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="08xx..." value="${data.whatsapp||''}" oninput="App.updateImportCell(${idx},'whatsapp',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
       <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="(def: user+12345)" value="${data.password||''}" oninput="App.updateImportCell(${idx},'password',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
       <td style="padding:4px 6px;">
+        <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="App.updateImportCell(${idx},'instansi',this.value)">
+          <option value="" ${(data.instansi||'')===''?'selected':''}>-- Pilih --</option>
+          <option value="BPMP" ${(data.instansi||'')==='BPMP'?'selected':''}>BPMP</option>
+          <option value="Dinas Pendidikan" ${(data.instansi||'')==='Dinas Pendidikan'?'selected':''}>Dinas Pendidikan</option>
+          <option value="Pengawas Sekolah" ${(data.instansi||'')==='Pengawas Sekolah'?'selected':''}>Pengawas Sekolah</option>
+          <option value="Satuan Pendidikan" ${(data.instansi||'')==='Satuan Pendidikan'?'selected':''}>Satuan Pendidikan</option>
+        </select>
+      </td>
+      <td style="padding:4px 6px;">
         <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="App.updateImportCell(${idx},'role',this.value)">
           ${roles.map(r => `<option value="${r}" ${(data.role||'USER')===r?'selected':''}>${r}</option>`).join('')}
         </select>
