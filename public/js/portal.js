@@ -505,34 +505,80 @@ const App = (() => {
   let _usersCurrentPage = 1;
   let _usersPerPage = 10;
   let _usersRoleFilter = 'ALL';
-  let _usersInstansiFilter = 'ALL';
-  let _usersJenjangFilter = 'ALL';
-  let _usersBentukFilter = 'ALL';
+  let _usersInstansiFilter = ['ALL'];
+  let _usersJenjangFilter = ['ALL'];
+  let _usersBentukFilter = ['ALL'];
   let _usersAppFilter = 'ALL';
   let _usersSearchQuery = '';
 
   function setUsersSearch(q) { _usersSearchQuery = q; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersRoleFilter(r) { _usersRoleFilter = r; _usersCurrentPage = 1; _applyUsersFilter(); }
-  function setUsersInstansiFilter(i) { _usersInstansiFilter = i; _usersCurrentPage = 1; _applyUsersFilter(); }
-  function setUsersJenjangFilter(j) { _usersJenjangFilter = j; _usersCurrentPage = 1; _applyUsersFilter(); }
-  function setUsersBentukFilter(b) { _usersBentukFilter = b; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersAppFilter(a) { _usersAppFilter = a; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPerPage(p) { _usersPerPage = p; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPage(p) { _usersCurrentPage = p; _applyUsersFilter(); }
+  
+  function toggleMultiSelect(id, event) {
+    if(event) event.stopPropagation();
+    document.querySelectorAll('.multi-select-dropdown').forEach(el => {
+      if (el.id !== id) el.classList.remove('active');
+    });
+    document.getElementById(id).classList.toggle('active');
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multi-select-wrap')) {
+      document.querySelectorAll('.multi-select-dropdown').forEach(el => el.classList.remove('active'));
+    }
+  });
+
+  function handleMultiSelectChange(type, clickedValue) {
+    const cbs = Array.from(document.querySelectorAll(`.cb-${type}`));
+    if (clickedValue === 'ALL') {
+      cbs.forEach(cb => { if (cb.value !== 'ALL') cb.checked = false; });
+    } else {
+      const allCb = cbs.find(cb => cb.value === 'ALL');
+      if (allCb) allCb.checked = false;
+    }
+    
+    let checkedVals = cbs.filter(cb => cb.checked).map(cb => cb.value);
+    if (checkedVals.length === 0) {
+      const allCb = cbs.find(cb => cb.value === 'ALL');
+      if (allCb) allCb.checked = true;
+      checkedVals = ['ALL'];
+    }
+    
+    if (type === 'jenjang') {
+      _usersJenjangFilter = checkedVals;
+      document.getElementById('label-jenjang').innerText = checkedVals.includes('ALL') ? 'Semua Jenjang' : checkedVals.join(', ');
+    } else if (type === 'bentuk') {
+      _usersBentukFilter = checkedVals;
+      document.getElementById('label-bentuk').innerText = checkedVals.includes('ALL') ? 'Semua Bentuk' : checkedVals.join(', ');
+    } else if (type === 'instansi') {
+      _usersInstansiFilter = checkedVals;
+      document.getElementById('label-instansi').innerText = checkedVals.includes('ALL') ? 'Semua Instansi' : checkedVals.join(', ');
+    }
+    
+    _usersCurrentPage = 1;
+    _applyUsersFilter();
+  }
+
   function resetUsersFilter() {
     _usersSearchQuery = '';
     _usersRoleFilter = 'ALL';
-    _usersInstansiFilter = 'ALL';
-    _usersJenjangFilter = 'ALL';
-    _usersBentukFilter = 'ALL';
+    _usersInstansiFilter = ['ALL'];
+    _usersJenjangFilter = ['ALL'];
+    _usersBentukFilter = ['ALL'];
     _usersAppFilter = 'ALL';
     _usersCurrentPage = 1;
     document.getElementById('inp-search-user').value = '';
     document.getElementById('filter-user-role').value = 'ALL';
-    document.getElementById('filter-user-instansi').value = 'ALL';
-    document.getElementById('filter-user-jenjang').value = 'ALL';
-    document.getElementById('filter-user-bentuk').value = 'ALL';
     document.getElementById('filter-user-app').value = 'ALL';
+    
+    document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => cb.checked = (cb.value === 'ALL'));
+    document.getElementById('label-jenjang').innerText = 'Semua Jenjang';
+    document.getElementById('label-bentuk').innerText = 'Semua Bentuk';
+    document.getElementById('label-instansi').innerText = 'Semua Instansi';
+    
     _applyUsersFilter();
   }
 
@@ -547,14 +593,14 @@ const App = (() => {
         (u.email || '').toLowerCase().includes(q)
       );
     }
-    if (_usersInstansiFilter !== 'ALL') {
-      filtered = filtered.filter(u => u.instansi === _usersInstansiFilter);
+    if (!_usersInstansiFilter.includes('ALL')) {
+      filtered = filtered.filter(u => _usersInstansiFilter.includes(u.instansi || 'Semua Instansi'));
     }
-    if (_usersJenjangFilter !== 'ALL') {
-      filtered = filtered.filter(u => (u.jenjang || 'Semua Jenjang') === _usersJenjangFilter);
+    if (!_usersJenjangFilter.includes('ALL')) {
+      filtered = filtered.filter(u => _usersJenjangFilter.includes(u.jenjang || 'Semua Jenjang'));
     }
-    if (_usersBentukFilter !== 'ALL') {
-      filtered = filtered.filter(u => (u.bentuk_pendidikan || 'Semua Bentuk') === _usersBentukFilter);
+    if (!_usersBentukFilter.includes('ALL')) {
+      filtered = filtered.filter(u => _usersBentukFilter.includes(u.bentuk_pendidikan || 'Semua Bentuk'));
     }
     if (_usersRoleFilter !== 'ALL') {
       filtered = filtered.filter(u => u.role === _usersRoleFilter);
@@ -1469,7 +1515,7 @@ const App = (() => {
   return {
     toggleSidebar, init, login, logout, loginWithGoogle, showView, showForgotPassword,
     adminTab, filterAdminApps,
-    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersJenjangFilter, setUsersBentukFilter, setUsersAppFilter, setUsersPerPage, setUsersPage, resetUsersFilter,
+    setUsersSearch, setUsersRoleFilter, setUsersAppFilter, setUsersPerPage, setUsersPage, resetUsersFilter, toggleMultiSelect, handleMultiSelectChange,
     showCreateUserModal, showRegisterAppModal, closeModal,
     createUser, registerApp, changePassword, editUser, saveEditUser,
     deleteUser, resetUserPassword, refresh, togglePassword,
