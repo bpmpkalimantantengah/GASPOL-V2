@@ -274,10 +274,9 @@
 
       <!-- Users management -->
       <div id="admin-users">
-        <div class="admin-toolbar" style="flex-wrap: wrap; gap: 10px;">
-          <div class="flex gap-8 items-center" style="flex-wrap:wrap; flex:1;">
-            <div class="search-wrap" style="flex:1; min-width:200px;"><i class="ti ti-search"></i><input class="search-input" type="text" oninput="App.setUsersSearch(this.value)" id="inp-search-user"/></div>
-            
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+          <!-- Top Row: Filters -->
+          <div class="flex gap-8 items-center" style="flex-wrap:wrap;">
             <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersJenjangFilter(this.value)" id="filter-user-jenjang">
               <option value="ALL">Semua Jenjang</option>
               <option value="SD">SD</option>
@@ -304,17 +303,24 @@
             <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersInstansiFilter(this.value)" id="filter-user-instansi"><option value="ALL">Semua Instansi</option><option value="BPMP">BPMP</option><option value="Dinas Pendidikan">Dinas Pendidikan</option><option value="Pengawas Sekolah">Pengawas Sekolah</option><option value="Satuan Pendidikan">Satuan Pendidikan</option></select>
             <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersRoleFilter(this.value)" id="filter-user-role"><option value="ALL">Semua Role</option><option value="SUPER_ADMIN">Super Admin</option><option value="ADMIN">Admin</option><option value="USER">User</option></select>
             <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersAppFilter(this.value)" id="filter-user-app"><option value="ALL">Semua Aplikasi</option></select>
-            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersPerPage(this.value)" id="filter-user-perpage"><option value="10">10 / halaman</option><option value="20">20 / halaman</option><option value="30">30 / halaman</option><option value="all">Semua</option></select>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div id="bulk-actions" style="display:none;align-items:center;gap:10px;background:var(--card);padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border);">
-              <span style="font-size:13px;font-weight:600;color:var(--text);"><span id="bulk-count">0</span> terpilih</span>
-              <button class="action-btn" title="Reset Sandi Massal" onclick="App.bulkResetPassword()"><i class="ti ti-key"></i></button>
-              <button class="action-btn" title="Edit Akses Aplikasi Massal" onclick="App.bulkEditAccess()" style="color:var(--gs);border-color:var(--gs);"><i class="ti ti-apps"></i></button>
-              <button class="action-btn danger" id="btn-bulk-delete" title="Hapus Massal" style="display:none;" onclick="App.bulkDeleteUser()"><i class="ti ti-trash"></i></button>
+          
+          <!-- Bottom Row: Search, Per Page, Actions -->
+          <div class="admin-toolbar" style="flex-wrap: wrap; gap: 10px; margin-bottom: 0;">
+            <div class="flex gap-8 items-center" style="flex-wrap:wrap; flex:1;">
+              <div class="search-wrap" style="flex:1; min-width:200px;"><i class="ti ti-search"></i><input class="search-input" type="text" oninput="App.setUsersSearch(this.value)" id="inp-search-user" placeholder="Cari pengguna..."/></div>
+              <select class="form-input" style="flex:none; width:140px; padding:8px 12px;" onchange="App.setUsersPerPage(this.value)" id="filter-user-perpage"><option value="10">10 / halaman</option><option value="20">20 / halaman</option><option value="30">30 / halaman</option><option value="all">Semua</option></select>
             </div>
-            <button class="btn-add" onclick="App.showCreateUserModal()"><i class="ti ti-user-plus"></i> Tambah</button>
-            <button class="btn-add" onclick="App.showImportModal()" style="background:var(--gs); color:#fff; border-color:var(--gs);"><i class="ti ti-file-import"></i> Import Massal</button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div id="bulk-actions" style="display:none;align-items:center;gap:10px;background:var(--card);padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border);">
+                <span style="font-size:13px;font-weight:600;color:var(--text);"><span id="bulk-count">0</span> terpilih</span>
+                <button class="action-btn" title="Reset Sandi Massal" onclick="App.bulkResetPassword()"><i class="ti ti-key"></i></button>
+                <button class="action-btn" title="Edit Akses Aplikasi Massal" onclick="App.bulkEditAccess()" style="color:var(--gs);border-color:var(--gs);"><i class="ti ti-apps"></i></button>
+                <button class="action-btn danger" id="btn-bulk-delete" title="Hapus Massal" style="display:none;" onclick="App.bulkDeleteUser()"><i class="ti ti-trash"></i></button>
+              </div>
+              <button class="btn-add" onclick="App.showCreateUserModal()"><i class="ti ti-user-plus"></i> Tambah</button>
+              <button class="btn-add" onclick="App.showImportModal()" style="background:var(--gs); color:#fff; border-color:var(--gs);"><i class="ti ti-file-import"></i> Import Massal</button>
+            </div>
           </div>
         </div>
         <div class="data-table-wrap">
