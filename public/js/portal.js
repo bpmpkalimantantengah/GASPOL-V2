@@ -1335,14 +1335,35 @@ const App = (() => {
     const checkedApps  = document.querySelectorAll('.cb-bulk-app:checked');
     if (checkedUsers.length === 0) { toast('Tidak ada pengguna terpilih.', 'error'); return; }
     const userIds = Array.from(checkedUsers).map(cb => cb.value);
-    const appAccesses = Array.from(checkedApps).map(cb => {
-      const roleEl = document.getElementById('bulk-app-role-' + cb.value);
-      return { appId: cb.value, appRole: roleEl ? roleEl.value : 'user' };
-    });
+    
     const mode = document.querySelector('input[name="bulk-access-mode"]:checked');
-    const replaceMode = mode ? mode.value === 'replace' : true;
-    const ok = await showConfirm('Konfirmasi Edit Akses Massal', `Menerapkan akses ${checkedApps.length} aplikasi ke ${checkedUsers.length} pengguna?<br><br><span style="font-size:12px;color:var(--text3);">Mode: ${replaceMode ? 'Ganti Semua' : 'Tambah Saja'}</span>`, false);
+    const modeValue = mode ? mode.value : 'replace';
+    
+    let replaceMode = false;
+    let appAccesses = [];
+    
+    if (modeValue === 'clear') {
+      replaceMode = true;
+      appAccesses = []; // empty array will just delete all and not insert
+    } else {
+      replaceMode = (modeValue === 'replace');
+      appAccesses = Array.from(checkedApps).map(cb => {
+        const roleEl = document.getElementById('bulk-app-role-' + cb.value);
+        return { appId: cb.value, appRole: roleEl ? roleEl.value : 'user' };
+      });
+      if (modeValue === 'add' && appAccesses.length === 0) {
+        toast('Pilih minimal satu aplikasi untuk ditambahkan.', 'error'); return;
+      }
+    }
+    
+    let confirmMsg = `Menerapkan akses ${appAccesses.length} aplikasi ke ${checkedUsers.length} pengguna?<br><br><span style="font-size:12px;color:var(--text3);">Mode: ${replaceMode ? 'Ganti Semua' : 'Tambah Saja'}</span>`;
+    if (modeValue === 'clear') {
+      confirmMsg = `Apakah Anda yakin ingin <b>MENGHAPUS SEMUA</b> akses aplikasi untuk ${checkedUsers.length} pengguna?<br><br><span style="font-size:12px;color:var(--danger);">Tindakan ini akan mencabut seluruh akses aplikasi mereka.</span>`;
+    }
+    
+    const ok = await showConfirm('Konfirmasi Edit Akses Massal', confirmMsg, false);
     if (!ok) return;
+    
     const r = await apiPost({ action: 'bulkUpdateUserAccess', token: _token, userIds, appAccesses, replace: replaceMode });
     if (r.success) { toast(r.message || `Akses berhasil diperbarui.`, 'success'); closeModal('modal-bulk-access'); await _loadUsers(); }
     else toast(r.error || 'Gagal memperbarui akses massal.', 'error');
