@@ -531,6 +531,16 @@ const App = (() => {
     }
   });
 
+  const JENJANG_BENTUK_MAP = {
+    'SD': ['SD'],
+    'SMP': ['SMP'],
+    'SMA': ['SMA'],
+    'SMK': ['SMK'],
+    'SLB': ['SLB'],
+    'PAUD': ['TK', 'KB', 'TPA', 'SPS'],
+    'Dikmas': ['PKBM', 'SKB']
+  };
+
   function handleMultiSelectChange(type, clickedValue) {
     const cbs = Array.from(document.querySelectorAll(`.cb-${type}`));
     if (clickedValue === 'ALL') {
@@ -550,6 +560,48 @@ const App = (() => {
     if (type === 'jenjang') {
       _usersJenjangFilter = checkedVals;
       document.getElementById('label-jenjang').innerText = checkedVals.includes('ALL') ? 'Semua Jenjang' : checkedVals.join(', ');
+      
+      // Update Bentuk Pendidikan options dynamically
+      let allowedBentuk = [];
+      if (checkedVals.includes('ALL')) {
+        allowedBentuk = 'ALL';
+      } else {
+        checkedVals.forEach(j => {
+          if (JENJANG_BENTUK_MAP[j]) {
+            allowedBentuk = allowedBentuk.concat(JENJANG_BENTUK_MAP[j]);
+          }
+        });
+      }
+      
+      const ddBentuk = document.getElementById('dd-bentuk');
+      const bentukLabels = ddBentuk.querySelectorAll('label');
+      let checkedBentuk = [];
+      bentukLabels.forEach(lbl => {
+        const cb = lbl.querySelector('input');
+        if (!cb) return;
+        const val = cb.value;
+        if (val === 'ALL') return;
+        
+        if (allowedBentuk === 'ALL' || allowedBentuk.includes(val)) {
+          lbl.style.display = 'flex';
+          if (cb.checked) checkedBentuk.push(val);
+        } else {
+          lbl.style.display = 'none';
+          cb.checked = false;
+        }
+      });
+      
+      // Update Bentuk Filter state if any selected shapes were hidden and unchecked
+      if (!checkedBentuk.length && !_usersBentukFilter.includes('ALL')) {
+        const allBcb = ddBentuk.querySelector('input[value="ALL"]');
+        if (allBcb) allBcb.checked = true;
+        _usersBentukFilter = ['ALL'];
+        document.getElementById('label-bentuk').innerText = 'Semua Bentuk';
+      } else if (checkedBentuk.length > 0) {
+        _usersBentukFilter = checkedBentuk;
+        document.getElementById('label-bentuk').innerText = checkedBentuk.join(', ');
+      }
+      
     } else if (type === 'bentuk') {
       _usersBentukFilter = checkedVals;
       document.getElementById('label-bentuk').innerText = checkedVals.includes('ALL') ? 'Semua Bentuk' : checkedVals.join(', ');
@@ -578,6 +630,12 @@ const App = (() => {
     document.getElementById('label-jenjang').innerText = 'Semua Jenjang';
     document.getElementById('label-bentuk').innerText = 'Semua Bentuk';
     document.getElementById('label-instansi').innerText = 'Semua Instansi';
+    
+    // Reset Bentuk Pendidikan visibility
+    const ddBentuk = document.getElementById('dd-bentuk');
+    if (ddBentuk) {
+      ddBentuk.querySelectorAll('label').forEach(lbl => lbl.style.display = 'flex');
+    }
     
     _applyUsersFilter();
   }
