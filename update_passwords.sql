@@ -1,0 +1,14 @@
+USE gaspol_portal;
+UPDATE Users SET passwordHash = 'a3de4b93d2a116afc6ab154482883c75d22424af30bfbedb002cca5853deccb3', salt = '6828a4275a3f4145822d112f6b24f1ba' WHERE username = '70063144';
+UPDATE Users SET passwordHash = '76913963fea5ebbfc20ade5986ddac4c2364ec005c4ad8fb7dcb3919ae753fae', salt = '3f1f26038b024200a06a59293b414ea1' WHERE username = '70063142';
+UPDATE Users SET passwordHash = 'a724cf990005a741fc1a4907523668e5e24f790df429a0bdb47925a33a58b0dd', salt = '83e29140c43d4db38e3a030ff6bab218' WHERE username = '70063572';
+UPDATE Users SET passwordHash = '04ca3fc21d302bbc94dcfdcd8e7a878db2958d335462c47c9fb12c98ade39f42', salt = '349fd9cb539648ee970e662bad15d6f9' WHERE username = '70063597';
+UPDATE Users SET passwordHash = '81ff4d8beef3dde0a4f95efeb185f76913ec23596b48bc23240e64800483084a', salt = '905ec48bbca1455784bdcae700b3b535' WHERE username = '70063550';
+UPDATE Users SET passwordHash = 'cb34332a852b8c715affd8355d306df59dd3af21cc58753626b25f3b8b8bd391', salt = 'e661c043fea0470fbbcaf0b995b39aa4' WHERE username = '70063501';
+UPDATE Users SET passwordHash = 'd8961eab0529cf6bfefe7bb9ef3c54b4985bad6918631208bf4f8abb47b948d0', salt = '099af21af3b64e8b80971110b659101a' WHERE username = '70063657';
+UPDATE Users SET passwordHash = '1d5e368365b4b8ccafab943e53d22aa7b359e7755a78f074c48c74d1ba7f59a9', salt = 'b65fe746267e40bb97d5982f5f149559' WHERE username = '70063454';
+UPDATE Users SET passwordHash = 'b4e5523ad3107bfaa43fa2e90b13d220f265d3ce971455e8823765caa99d5867', salt = '6adca3b89b1244a28fa0a30ff41c91d8' WHERE username = '70063361';
+UPDATE Users SET passwordHash = '848c975b68fd1da1df1598322ca6f0049a32877e60832da63bad46b74beaacf1', salt = '15285a5ad5eb4dcb8847838e547a7109' WHERE username = '70063360';
+UPDATE Users SET passwordHash = 'dea8a899ab1a1648053253921c61e01dfbf38a2f2507b87ef7f67a5e0c7b7be6', salt = '222a2ed6cce24caeb278aafa8f58eb94' WHERE username = '70063145';
+UPDATE Users SET passwordHash = 'f8a6f5772d217a0ea5fea4b90b27fca8e280ad121746143666671de5a3a2e711', salt = '3f60be9cdc8845f98a8a1ae96567d9ee' WHERE username = '70063656';
+UPDATE Users SET passwordHash = '6ff5e1a499d9f09df8882bc48ba28a766f8ee69f8a82239f39d2069c6f39dd3a', salt = '2950e45e5d0741c6bb4944400ebab550' WHERE username = '70063231';
