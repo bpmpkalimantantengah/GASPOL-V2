@@ -579,6 +579,7 @@ const App = (() => {
         <td>${u.username}</td>
         <td>${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</td>
         <td style="font-size:12px;">${u.instansi || '<span style="color:var(--text3)">—</span>'}</td>
+        <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}</td>
         <td><span class="role-badge role-${u.role.toLowerCase().replace('_','-')}">${u.role}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">

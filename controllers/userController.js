@@ -14,7 +14,7 @@ const { _writeAuditLog } = require('./authController');
 // ── GET ALL USERS ───────────────────────────────────────────
 exports.getAllUsers = async (req, res) => {
   try {
-    const [users] = await portalPool.query(`SELECT * FROM ${TABLES.USERS}`);
+    const [users] = await portalPool.query(`SELECT u.*, IF(u.instansi = 'Satuan Pendidikan', COALESCE(s.jenjang, 'Semua Jenjang'), 'Semua Jenjang') as jenjang FROM ${TABLES.USERS} u LEFT JOIN master_sekolah s ON u.username = s.npsn`);
     const [allApps] = await portalPool.query(`SELECT * FROM ${TABLES.APPS} WHERE status != 'INACTIVE'`);
     const [allAccess] = await portalPool.query(`SELECT * FROM ${TABLES.APP_ACCESS}`);
 
