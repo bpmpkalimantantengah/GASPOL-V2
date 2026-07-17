@@ -519,6 +519,22 @@ const App = (() => {
   function setUsersAppFilter(a) { _usersAppFilter = a; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPerPage(p) { _usersPerPage = p; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPage(p) { _usersCurrentPage = p; _applyUsersFilter(); }
+  function resetUsersFilter() {
+    _usersSearchQuery = '';
+    _usersRoleFilter = 'ALL';
+    _usersInstansiFilter = 'ALL';
+    _usersJenjangFilter = 'ALL';
+    _usersBentukFilter = 'ALL';
+    _usersAppFilter = 'ALL';
+    _usersCurrentPage = 1;
+    document.getElementById('inp-search-user').value = '';
+    document.getElementById('filter-user-role').value = 'ALL';
+    document.getElementById('filter-user-instansi').value = 'ALL';
+    document.getElementById('filter-user-jenjang').value = 'ALL';
+    document.getElementById('filter-user-bentuk').value = 'ALL';
+    document.getElementById('filter-user-app').value = 'ALL';
+    _applyUsersFilter();
+  }
 
     function _applyUsersFilter() {
     let filtered = _allUsers;
@@ -1453,7 +1469,7 @@ const App = (() => {
   return {
     toggleSidebar, init, login, logout, loginWithGoogle, showView, showForgotPassword,
     adminTab, filterAdminApps,
-    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersJenjangFilter, setUsersBentukFilter, setUsersAppFilter, setUsersPerPage, setUsersPage,
+    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersJenjangFilter, setUsersBentukFilter, setUsersAppFilter, setUsersPerPage, setUsersPage, resetUsersFilter,
     showCreateUserModal, showRegisterAppModal, closeModal,
     createUser, registerApp, changePassword, editUser, saveEditUser,
     deleteUser, resetUserPassword, refresh, togglePassword,
