@@ -64,7 +64,7 @@ exports.getAllUsers = async (req, res) => {
 // ── CREATE USER ─────────────────────────────────────────────
 exports.createUser = async (req, res) => {
   try {
-    let { username, email, whatsapp, fullName, password, role } = req.body;
+    let { username, email, whatsapp, fullName, password, role, instansi } = req.body;
     const caller = req.ssoUser;
 
     if (![USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN].includes(caller.user.role)) {
@@ -101,8 +101,8 @@ exports.createUser = async (req, res) => {
     const userId = generateUuid();
 
     await portalPool.query(
-      `INSERT INTO ${TABLES.USERS} (userId, username, email, whatsapp, passwordHash, salt, fullName, role, status, loginAttempts, lockedUntil, createdAt, updatedAt, lastLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, sanitize(username), email ? sanitize(email).toLowerCase() : '', formatWhatsApp(sanitize(whatsapp || '')), hashPassword(password, salt), salt, sanitize(fullName), role || USER_ROLES.USER, USER_STATUS.ACTIVE, 0, null, now, now, '']
+      `INSERT INTO ${TABLES.USERS} (userId, username, email, whatsapp, passwordHash, salt, fullName, role, status, loginAttempts, lockedUntil, createdAt, updatedAt, lastLogin, instansi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, sanitize(username), email ? sanitize(email).toLowerCase() : '', formatWhatsApp(sanitize(whatsapp || '')), hashPassword(password, salt), salt, sanitize(fullName), role || USER_ROLES.USER, USER_STATUS.ACTIVE, 0, null, now, now, '', sanitize(instansi || '')]
     );
 
     await _writeAuditLog(caller.userId, caller.user.username, 'CREATE_USER', '', 'Membuat user: ' + username, 'SUCCESS');
@@ -140,7 +140,8 @@ exports.updateUser = async (req, res) => {
     if (data.fullName !== undefined) updates.fullName = sanitize(data.fullName);
     if (data.email !== undefined) updates.email = sanitize(data.email).toLowerCase();
     if (data.whatsapp !== undefined) updates.whatsapp = formatWhatsApp(sanitize(data.whatsapp));
-    if (data.role !== undefined) {
+    if (data.instansi !== undefined) updates.instansi = sanitize(data.instansi);
+      if (data.role !== undefined) {
       if (data.role === USER_ROLES.SUPER_ADMIN && caller.user.role !== USER_ROLES.SUPER_ADMIN) {
         return error(res, 'Hanya Super Admin yang bisa menjadikan Super Admin.', 403);
       }
@@ -269,8 +270,8 @@ exports.bulkCreateUsers = async (req, res) => {
         const now = formatDate(new Date());
 
         await portalPool.query(
-          `INSERT IGNORE INTO ${TABLES.USERS} (userId, username, email, whatsapp, passwordHash, salt, fullName, role, status, loginAttempts, lockedUntil, createdAt, updatedAt, lastLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [generateUuid(), sanitize(u.username || ''), u.email ? sanitize(u.email).toLowerCase() : '', formatWhatsApp(sanitize(u.whatsapp || '')), hashPassword(pwd, salt), salt, sanitize(u.fullName || ''), u.role || USER_ROLES.USER, USER_STATUS.ACTIVE, 0, null, now, now, '']
+          `INSERT IGNORE INTO ${TABLES.USERS} (userId, username, email, whatsapp, passwordHash, salt, fullName, role, status, loginAttempts, lockedUntil, createdAt, updatedAt, lastLogin, instansi) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [generateUuid(), sanitize(u.username || ''), u.email ? sanitize(u.email).toLowerCase() : '', formatWhatsApp(sanitize(u.whatsapp || '')), hashPassword(pwd, salt), salt, sanitize(u.fullName || ''), u.role || USER_ROLES.USER, USER_STATUS.ACTIVE, 0, null, now, now, '', sanitize(u.instansi || '')]
         );
         created++;
       } catch (e) {

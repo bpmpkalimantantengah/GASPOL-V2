@@ -505,11 +505,13 @@ const App = (() => {
   let _usersCurrentPage = 1;
   let _usersPerPage = 10;
   let _usersRoleFilter = 'ALL';
+  let _usersInstansiFilter = 'ALL';
   let _usersAppFilter = 'ALL';
   let _usersSearchQuery = '';
 
   function setUsersSearch(q) { _usersSearchQuery = q; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersRoleFilter(r) { _usersRoleFilter = r; _usersCurrentPage = 1; _applyUsersFilter(); }
+  function setUsersInstansiFilter(i) { _usersInstansiFilter = i; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersAppFilter(a) { _usersAppFilter = a; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPerPage(p) { _usersPerPage = p; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPage(p) { _usersCurrentPage = p; _applyUsersFilter(); }
@@ -524,6 +526,9 @@ const App = (() => {
         (u.username || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q)
       );
+    }
+    if (_usersInstansiFilter !== 'ALL') {
+      filtered = filtered.filter(u => u.instansi === _usersInstansiFilter);
     }
     if (_usersRoleFilter !== 'ALL') {
       filtered = filtered.filter(u => u.role === _usersRoleFilter);
@@ -573,6 +578,7 @@ const App = (() => {
         <td><strong>${u.fullName}</strong></td>
         <td>${u.username}</td>
         <td>${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</td>
+        <td style="font-size:12px;">${u.instansi || '<span style="color:var(--text3)">—</span>'}</td>
         <td><span class="role-badge role-${u.role.toLowerCase().replace('_','-')}">${u.role}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">
@@ -944,6 +950,7 @@ const App = (() => {
           email    : obj['email'] || '',
           whatsapp : obj['no hp'] || obj['whatsapp'] || obj['hp'] || obj['wa'] || '',
           password : obj['password'] || '',
+          instansi : obj['instansi'] || '',
           role     : (obj['role'] || 'USER').toUpperCase(),
         };
       });
@@ -955,8 +962,8 @@ const App = (() => {
   }
 
   function downloadImportTemplate() {
-    const header = 'Nama Lengkap,Username,Email,No HP,Password,Role';
-    const contoh = ['SDN 001 Palangka Raya,1023456789,,,, USER','SDN 002 Palangka Raya,1023456790,,,,USER','SMPN 1 Palangka Raya,1023456791,,,,USER'].join('\n');
+    const header = 'Nama Lengkap,Username,Email,No HP,Password,Instansi,Role';
+    const contoh = ['SDN 001 Palangka Raya,1023456789,,,,Satuan Pendidikan,USER','SDN 002 Palangka Raya,1023456790,,,,Satuan Pendidikan,USER','SMPN 1 Palangka Raya,1023456791,,,,Satuan Pendidikan,USER'].join('\n');
     const blob = new Blob([header + '\n' + contoh], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1012,6 +1019,7 @@ const App = (() => {
       whatsapp: document.getElementById('m-whatsapp').value.trim(),
       password: document.getElementById('m-password').value,
       role: document.getElementById('m-role').value,
+      instansi: document.getElementById('m-instansi').value,
     };
     const r = await apiPost(data);
     if (r.success) { closeModal('modal-create-user'); toast('Pengguna berhasil dibuat.', 'success'); await _loadUsers(); }
@@ -1194,6 +1202,7 @@ const App = (() => {
     document.getElementById('e-fullname').value = user.fullName;
     document.getElementById('e-email').value = user.email;
     document.getElementById('e-whatsapp').value = user.whatsapp || '';
+    document.getElementById('e-instansi').value = user.instansi || '';
     document.getElementById('e-role').value = user.role;
     document.getElementById('e-status').value = user.status;
     const isSuperAdmin = user.role === 'SUPER_ADMIN';
@@ -1226,7 +1235,7 @@ const App = (() => {
 
   async function saveEditUser() {
     const userId = document.getElementById('e-userid').value;
-    const data = { action: 'updateUser', token: _token, targetUserId: userId, fullName: document.getElementById('e-fullname').value.trim(), email: document.getElementById('e-email').value.trim(), whatsapp: document.getElementById('e-whatsapp').value.trim(), role: document.getElementById('e-role').value, status: document.getElementById('e-status').value };
+    const data = { action: 'updateUser', token: _token, targetUserId: userId, fullName: document.getElementById('e-fullname').value.trim(), email: document.getElementById('e-email').value.trim(), whatsapp: document.getElementById('e-whatsapp').value.trim(), role: document.getElementById('e-role').value, instansi: document.getElementById('e-instansi').value, status: document.getElementById('e-status').value };
     const appAccesses = Array.from(document.querySelectorAll('.cb-app-access:checked')).map(cb => {
       const select = document.getElementById('app-role-' + cb.value);
       return { appId: cb.value, appRole: select ? select.value : 'user' };
@@ -1422,7 +1431,7 @@ const App = (() => {
   return {
     toggleSidebar, init, login, logout, loginWithGoogle, showView, showForgotPassword,
     adminTab, filterAdminApps,
-    setUsersSearch, setUsersRoleFilter, setUsersAppFilter, setUsersPerPage, setUsersPage,
+    setUsersSearch, setUsersRoleFilter, setUsersInstansiFilter, setUsersAppFilter, setUsersPerPage, setUsersPage,
     showCreateUserModal, showRegisterAppModal, closeModal,
     createUser, registerApp, changePassword, editUser, saveEditUser,
     deleteUser, resetUserPassword, refresh, togglePassword,
