@@ -514,11 +514,13 @@ const App = (() => {
   function setUsersSearch(q) { _usersSearchQuery = q; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersRoleFilter(r) { _usersRoleFilter = r; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersInstansiFilter(i) { _usersInstansiFilter = i; _usersCurrentPage = 1; _applyUsersFilter(); }
+  function setUsersJenjangFilter(j) { _usersJenjangFilter = j; _usersCurrentPage = 1; _applyUsersFilter(); }
+  function setUsersBentukFilter(b) { _usersBentukFilter = b; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersAppFilter(a) { _usersAppFilter = a; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPerPage(p) { _usersPerPage = p; _usersCurrentPage = 1; _applyUsersFilter(); }
   function setUsersPage(p) { _usersCurrentPage = p; _applyUsersFilter(); }
 
-  function _applyUsersFilter() {
+    function _applyUsersFilter() {
     let filtered = _allUsers;
     
     if (_usersSearchQuery) {
@@ -531,6 +533,12 @@ const App = (() => {
     }
     if (_usersInstansiFilter !== 'ALL') {
       filtered = filtered.filter(u => u.instansi === _usersInstansiFilter);
+    }
+    if (_usersJenjangFilter !== 'ALL') {
+      filtered = filtered.filter(u => (u.jenjang || 'Semua Jenjang') === _usersJenjangFilter);
+    }
+    if (_usersBentukFilter !== 'ALL') {
+      filtered = filtered.filter(u => (u.bentuk_pendidikan || 'Semua Bentuk') === _usersBentukFilter);
     }
     if (_usersRoleFilter !== 'ALL') {
       filtered = filtered.filter(u => u.role === _usersRoleFilter);
