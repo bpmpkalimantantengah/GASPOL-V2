@@ -1299,6 +1299,14 @@ const App = (() => {
     if (modeReplace) modeReplace.checked = true;
     const appListEl = document.getElementById('bulk-access-apps-list');
     if (!appListEl) return;
+    
+    let userAccessMap = {};
+    if (checked.length === 1) {
+      const userId = checked[0].value;
+      const r = await apiGet('getUserAccess', { token: _token, targetUserId: userId });
+      if (r.success) { r.accesses.forEach(a => { userAccessMap[a.appId] = a.appRole || 'user'; }); }
+    }
+    
     if (!_allAdminApps.length) {
       appListEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">Belum ada aplikasi yang terdaftar.</div>';
     } else {
@@ -1306,12 +1314,15 @@ const App = (() => {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:6px 8px;border-radius:6px;background:#fff;border:1px solid var(--border);">
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;flex:1;">
             <input type="checkbox" class="cb-bulk-app" value="${app.appId}" data-appname="${app.appName}"
+              ${userAccessMap[app.appId] ? 'checked' : ''}
               onchange="document.getElementById('bulk-app-role-${app.appId}').disabled = !this.checked;" />
             <i class="ti ${app.appIcon || 'ti-app'}" style="color:${app.color};"></i>
             <span>${app.appName}</span>
           </label>
-          <select id="bulk-app-role-${app.appId}" class="form-input" style="width:100px;padding:4px 8px;font-size:12px;" disabled>
-            <option value="user">User</option><option value="admin">Admin</option><option value="viewer">Viewer</option>
+          <select id="bulk-app-role-${app.appId}" class="form-input" style="width:100px;padding:4px 8px;font-size:12px;" ${userAccessMap[app.appId] ? '' : 'disabled'}>
+            <option value="user" ${userAccessMap[app.appId] === 'user' ? 'selected' : ''}>User</option>
+            <option value="admin" ${userAccessMap[app.appId] === 'admin' ? 'selected' : ''}>Admin</option>
+            <option value="viewer" ${userAccessMap[app.appId] === 'viewer' ? 'selected' : ''}>Viewer</option>
           </select>
         </div>
       `).join('');
