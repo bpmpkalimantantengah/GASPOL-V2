@@ -278,7 +278,7 @@
           <div class="flex gap-8 items-center" style="flex-wrap:wrap; flex:1;">
             <div class="search-wrap" style="flex:1; min-width:200px;"><i class="ti ti-search"></i><input class="search-input" type="text" oninput="App.setUsersSearch(this.value)" id="inp-search-user"/></div>
             
-            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersJenjangFilter(this.value)" id="filter-user-jenjang">
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersJenjangFilter(this.value)" id="filter-user-jenjang">
               <option value="ALL">Semua Jenjang</option>
               <option value="SD">SD</option>
               <option value="SMP">SMP</option>
@@ -287,7 +287,7 @@
               <option value="SLB">SLB</option>
               <option value="PAUD">PAUD</option>
             </select>
-            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersBentukFilter(this.value)" id="filter-user-bentuk">
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersBentukFilter(this.value)" id="filter-user-bentuk">
               <option value="ALL">Semua Bentuk</option>
               <option value="KB">KB</option>
               <option value="PKBM">PKBM</option>
@@ -301,10 +301,10 @@
               <option value="TK">TK</option>
               <option value="TPA">TPA</option>
             </select>
-            <select class="form-input" style="width:150px; padding:8px 12px;" onchange="App.setUsersInstansiFilter(this.value)" id="filter-user-instansi"><option value="ALL">Semua Instansi</option><option value="BPMP">BPMP</option><option value="Dinas Pendidikan">Dinas Pendidikan</option><option value="Pengawas Sekolah">Pengawas Sekolah</option><option value="Satuan Pendidikan">Satuan Pendidikan</option></select>
-            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersRoleFilter(this.value)" id="filter-user-role"><option value="ALL">Semua Role</option><option value="SUPER_ADMIN">Super Admin</option><option value="ADMIN">Admin</option><option value="USER">User</option></select>
-            <select class="form-input" style="width:150px; padding:8px 12px;" onchange="App.setUsersAppFilter(this.value)" id="filter-user-app"><option value="ALL">Semua Aplikasi</option></select>
-            <select class="form-input" style="width:140px; padding:8px 12px;" onchange="App.setUsersPerPage(this.value)" id="filter-user-perpage"><option value="10">10 / halaman</option><option value="20">20 / halaman</option><option value="30">30 / halaman</option><option value="all">Semua</option></select>
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersInstansiFilter(this.value)" id="filter-user-instansi"><option value="ALL">Semua Instansi</option><option value="BPMP">BPMP</option><option value="Dinas Pendidikan">Dinas Pendidikan</option><option value="Pengawas Sekolah">Pengawas Sekolah</option><option value="Satuan Pendidikan">Satuan Pendidikan</option></select>
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersRoleFilter(this.value)" id="filter-user-role"><option value="ALL">Semua Role</option><option value="SUPER_ADMIN">Super Admin</option><option value="ADMIN">Admin</option><option value="USER">User</option></select>
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersAppFilter(this.value)" id="filter-user-app"><option value="ALL">Semua Aplikasi</option></select>
+            <select class="form-input" style="flex:1; min-width:130px; max-width:200px; padding:8px 12px;" onchange="App.setUsersPerPage(this.value)" id="filter-user-perpage"><option value="10">10 / halaman</option><option value="20">20 / halaman</option><option value="30">30 / halaman</option><option value="all">Semua</option></select>
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <div id="bulk-actions" style="display:none;align-items:center;gap:10px;background:var(--card);padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border);">
