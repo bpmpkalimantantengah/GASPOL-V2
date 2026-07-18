@@ -719,7 +719,7 @@ const App = (() => {
             </div>
           </div>
         </td>
-        <td style="font-size:11px;color:var(--text);line-height:1.4;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? u.apps.join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
+        <td style="font-size:11px;color:var(--text);line-height:1.4;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? [...u.apps].sort((a, b) => a.localeCompare(b)).join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
         <td style="font-size:11px;color:var(--text3);">${formatDateID(u.lastLogin)}</td>
         <td><div class="actions">
           ${isProtectedTarget ? '' : `
@@ -762,7 +762,7 @@ const App = (() => {
   async function _loadAdminApps() {
     document.getElementById('apps-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;"><div class="spinner" style="width:24px;height:24px;border-width:2px;margin:auto;"></div></td></tr>';
     const r = await apiGet('getAllApps', { token: _token });
-    _allAdminApps = r.apps || [];
+    _allAdminApps = (r.apps || []).sort((a, b) => a.appName.localeCompare(b.appName));
     
     const filterAppEl = document.getElementById('filter-user-app');
     if (filterAppEl) {
@@ -1677,5 +1677,6 @@ function openApp(url, appId) { App.openApp && App.openApp(url, appId); }
 
 window.App = App; // EXPOSE KE GLOBAL UNTUK INLINE ONCLICK
 window.addEventListener('load', App.init);
+
 
 
