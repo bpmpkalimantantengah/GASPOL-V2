@@ -1036,7 +1036,7 @@ const App = (() => {
     </tr>`;
   }
 
-  function _renderImportTable(rows) {
+  function _renderImportTable(rows = _importRows) {
     _importRows = rows.map(r => Object.assign({}, r));
     document.getElementById('import-users-tbody').innerHTML = _importRows.map((r, i) => _importRowHtml(i, r)).join('');
     _updateImportStats();
@@ -1075,6 +1075,40 @@ const App = (() => {
   function handleImportCSV(input) {
     const file = input.files[0];
     if (!file) return;
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+        if (json.length < 2) { toast('File Excel kosong atau hanya berisi header.', 'error'); return; }
+        
+        const headers = (json[0] || []).map(h => (h||'').toString().toLowerCase().trim());
+        const rows = json.slice(1).map(cols => {
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = (cols[i] || '').toString().trim(); });
+          return {
+            fullName : obj['nama lengkap'] || obj['fullname'] || obj['nama'] || '',
+            username : obj['username'] || obj['npsn'] || '',
+            email    : obj['email'] || '',
+            whatsapp : obj['no hp'] || obj['whatsapp'] || obj['hp'] || obj['wa'] || '',
+            password : obj['password'] || '',
+            instansi : obj['instansi'] || '',
+            role     : (obj['role'] || 'USER').toUpperCase()
+          };
+        }).filter(r => r.fullName && r.username);
+        
+        _renderImportTable(rows);
+        toast(`${rows.length} baris berhasil dimuat dari Excel.`, 'success');
+      };
+      reader.readAsArrayBuffer(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = function(e) {
       const text = e.target.result;
@@ -1095,7 +1129,7 @@ const App = (() => {
           instansi : obj['instansi'] || '',
           role     : (obj['role'] || 'USER').toUpperCase(),
         };
-      });
+      }).filter(r => r.fullName && r.username);
       if (rows.length > 500) { toast('Maksimal 500 baris per import.', 'error'); return; }
       _renderImportTable(rows);
       toast(`${rows.length} baris berhasil dimuat dari CSV.`, 'success');
@@ -1104,13 +1138,28 @@ const App = (() => {
   }
 
   function downloadImportTemplate() {
-    const header = 'Nama Lengkap,Username,Email,No HP,Password,Instansi,Role';
-    const contoh = ['SDN 001 Palangka Raya,1023456789,,,,Satuan Pendidikan,USER','SDN 002 Palangka Raya,1023456790,,,,Satuan Pendidikan,USER','SMPN 1 Palangka Raya,1023456791,,,,Satuan Pendidikan,USER'].join('\n');
-    const blob = new Blob([header + '\n' + contoh], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'template_import_pengguna.csv';
-    a.click();
+    if (typeof XLSX !== 'undefined') {
+      const ws_data = [
+        ['Nama Lengkap', 'Username', 'Email', 'No HP', 'Password', 'Instansi', 'Role'],
+        ['SDN 001 Palangka Raya', '1023456789', '', '', '', 'Satuan Pendidikan', 'USER'],
+        ['SDN 002 Palangka Raya', '1023456790', '', '', '', 'Satuan Pendidikan', 'USER'],
+        ['SMPN 1 Palangka Raya', '1023456791', '', '', '', 'Satuan Pendidikan', 'USER']
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      const wscols = [ {wch: 25}, {wch: 15}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 10} ];
+      ws['!cols'] = wscols;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Template");
+      XLSX.writeFile(wb, "template_import_pengguna.xlsx");
+    } else {
+      const header = 'Nama Lengkap,Username,Email,No HP,Password,Instansi,Role';
+      const contoh = ['SDN 001 Palangka Raya,1023456789,,,,Satuan Pendidikan,USER','SDN 002 Palangka Raya,1023456790,,,,Satuan Pendidikan,USER','SMPN 1 Palangka Raya,1023456791,,,,Satuan Pendidikan,USER'].join('\n');
+      const blob = new Blob([header + '\n' + contoh], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'template_import_pengguna.csv';
+      a.click();
+    }
   }
 
   async function doImportUsers() {
