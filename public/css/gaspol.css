@@ -483,7 +483,10 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .main-content { margin-left: 0; width: 100%; }
   #btn-sidebar-toggle { display: flex !important; }
   #btn-sidebar-close { display: flex !important; }
-  .login-brand { display: none; }
+  #page-login { flex-direction: column; }
+  .login-brand { width: 100%; padding: 40px 24px 30px 24px; display: flex; flex-direction: column; justify-content: center; min-height: auto; }
+  .brand-logo { margin-bottom: 0; }
+  .brand-desc, .brand-apps { display: none; }
   .login-form-area { padding: 24px; }
   .stats-grid { grid-template-columns: 1fr; }
   .apps-grid { grid-template-columns: 1fr; }
