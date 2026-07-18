@@ -105,11 +105,12 @@ input, button, select { font-family: inherit; }
 }
 .brand-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; z-index: 1; }
 .brand-icon {
+  flex-shrink: 0;
   width: 56px; height: 56px; background: var(--ga);
   border-radius: 14px; display: flex; align-items: center; justify-content: center;
 }
 .brand-icon i { font-size: 30px; color: var(--gp); }
-.brand-name h1 { color: #fff; font-size: 30px; font-weight: 800; letter-spacing: 2px; line-height: 1; }
+.brand-name h1 { color: #fff; font-size: 22px; white-space: nowrap; font-weight: 800; letter-spacing: 2px; line-height: 1; }
 .brand-name p  { color: rgba(255,255,255,0.5); font-size: 9px; letter-spacing: 1px; margin-top: 4px; }
 .brand-desc { color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.7; max-width: 280px; z-index: 1; }
 .brand-apps { display: flex; gap: 10px; margin-top: 32px; z-index: 1; }
@@ -494,3 +495,4 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .page-view { padding: 16px; }
   .modal { max-width: 90%; padding: 20px; }
 }
+
