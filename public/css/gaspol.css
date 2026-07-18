@@ -302,7 +302,7 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   display: block;
 }
 .app-card:hover { border-color: var(--gs); box-shadow: var(--shadow); transform: translateY(-2px); }
-.app-card-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+.app-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 .app-card-icon {
   width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -500,6 +500,7 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .page-view { padding: 16px; }
   .modal { max-width: 90%; padding: 20px; }
 }
+
 
 
 
