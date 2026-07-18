@@ -705,10 +705,10 @@ const App = (() => {
       return `
       <tr>
         <td style="text-align:center;"><input type="checkbox" class="cb-user" value="${u.userId}" data-username="${u.username}" onchange="App.updateBulkActions()" ${isProtectedTarget ? 'disabled title="Admin tidak dapat mengedit sesama Admin"' : ''} /></td>
-        <td><strong>${u.fullName}</strong></td>
-        <td>${u.username}</td>
-        <td>${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</td>
-        <td style="font-size:12px;">${u.instansi || '<span style="color:var(--text3)">—</span>'}</td>
+        <td><div style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>${u.fullName}</strong></div></td>
+        <td><div style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.username}</div></td>
+        <td><div style="max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; line-height:1.4;">${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</div></td>
+        <td style="font-size:12px;"><div style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.instansi || '<span style="color:var(--text3)">-</span>'}</div></td>
         <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}<br><span style="color:var(--text3);font-size:11px;">${u.bentuk_pendidikan || 'Semua Bentuk'}</span></td>
         <td>
           <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
@@ -1676,6 +1676,7 @@ function openApp(url, appId) { App.openApp && App.openApp(url, appId); }
 
 window.App = App; // EXPOSE KE GLOBAL UNTUK INLINE ONCLICK
 window.addEventListener('load', App.init);
+
 
 
 
