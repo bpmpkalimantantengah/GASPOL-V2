@@ -483,7 +483,7 @@ const App = (() => {
     if (navEl) navEl.classList.add('active');
     if (window.innerWidth <= 768) toggleSidebar(true);
 
-    if (viewId === 'admin') _loadAdminData();
+    if (viewId === 'admin') { resetUsersFilter(); _loadAdminData(); }
   }
 
   // ── Load data admin ────────────────────────────────────
@@ -833,6 +833,7 @@ const App = (() => {
     if (btn) btn.className = 'btn-add';
 
     if (tab === 'ai-config' && !_aiConfigLoaded) loadAIConfig();
+    if (tab === 'users') resetUsersFilter();
     if (tab === 'online-users' && !_onlineUsersLoaded) loadOnlineUsers();
   }
 
