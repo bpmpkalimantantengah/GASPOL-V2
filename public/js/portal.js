@@ -775,7 +775,7 @@ const App = (() => {
     }
     tbody.innerHTML = _allAdminApps.map(a => `
       <tr>
-        <td><strong><i class="ti ${a.appIcon||'ti-app'}" style="color:${a.color};vertical-align:-2px;margin-right:6px;"></i>${a.appName}</strong></td>
+        <td><strong style="display:flex;align-items:center;gap:6px;"><i class="ti ${a.appIcon||'ti-app'}" style="color:${a.color};font-size:18px;"></i>${a.appName}</strong></td>
         <td><div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:11px;color:var(--text3);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.appUrl}</span>
           <i class="ti ti-copy" style="cursor:pointer;color:var(--gs);font-size:14px;" title="Salin URL" onclick="App.copyText('${a.appUrl}')"></i>
@@ -1676,6 +1676,7 @@ function openApp(url, appId) { App.openApp && App.openApp(url, appId); }
 
 window.App = App; // EXPOSE KE GLOBAL UNTUK INLINE ONCLICK
 window.addEventListener('load', App.init);
+
 
 
 
