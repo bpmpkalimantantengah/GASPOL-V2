@@ -83,6 +83,7 @@ input, button, select { font-family: inherit; }
   min-height: 100vh; display: flex;
 }
 .login-brand {
+  container-type: inline-size;
   width: 42%; background: var(--gp); padding: 56px 48px;
   display: flex; flex-direction: column; justify-content: center;
   position: relative; overflow: hidden;
@@ -110,7 +111,7 @@ input, button, select { font-family: inherit; }
   border-radius: 14px; display: flex; align-items: center; justify-content: center;
 }
 .brand-icon i { font-size: 30px; color: var(--gp); }
-.brand-name h1 { color: #fff; font-size: clamp(16px, 2.1vw, 30px); white-space: nowrap; font-weight: 800; letter-spacing: 2px; line-height: 1; }
+.brand-name h1 { color: #fff; font-size: clamp(16px, 7cqi, 30px); white-space: nowrap; font-weight: 800; letter-spacing: 2px; line-height: 1; }
 .brand-name p  { color: rgba(255,255,255,0.5); font-size: 9px; letter-spacing: 1px; margin-top: 4px; }
 .brand-desc { color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.7; max-width: 280px; z-index: 1; }
 .brand-apps { display: flex; gap: 10px; margin-top: 32px; z-index: 1; }
@@ -485,7 +486,8 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   #btn-sidebar-toggle { display: flex !important; }
   #btn-sidebar-close { display: flex !important; }
   #page-login { flex-direction: column; }
-  .login-brand { width: 100%; padding: 40px 24px 30px 24px; display: flex; flex-direction: column; justify-content: center; min-height: auto; }
+  .login-brand {
+  container-type: inline-size; width: 100%; padding: 40px 24px 30px 24px; display: flex; flex-direction: column; justify-content: center; min-height: auto; }
   .brand-logo { margin-bottom: 0; }
   .brand-name h1 { font-size: 20px !important; }
   .brand-icon { width: 48px; height: 48px; }
@@ -498,6 +500,7 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .page-view { padding: 16px; }
   .modal { max-width: 90%; padding: 20px; }
 }
+
 
 
 
