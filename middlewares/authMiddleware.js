@@ -106,7 +106,7 @@ async function validateTokenFromDB(token, appId) {
       valid   : true,
       userId  : user.userId,
       user    : safeUser,
-      appRole : appRole || user.role,
+      appRole : (appRole || user.role).toUpperCase(),
     };
   } catch (err) {
     console.error('[authMiddleware] validateTokenFromDB error:', err.message);
