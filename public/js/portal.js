@@ -1178,19 +1178,23 @@ const App = (() => {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-upload"></i> Proses Import';
 
-    if (!r.success && !r.successCount) { toast(r.error || 'Gagal melakukan import.', 'error'); return; }
+    if (!r.success && (r.successCount === undefined && r.created === undefined)) { toast(r.error || 'Gagal melakukan import.', 'error'); return; }
 
-    const isFullSuccess = r.failCount === 0;
+    const succCount = r.successCount !== undefined ? r.successCount : (r.created || 0);
+    const flCount = r.failCount !== undefined ? r.failCount : (r.errors ? r.errors.length : 0);
+    const msg = r.message || `Berhasil import ${succCount} pengguna, Gagal ${flCount} pengguna.`;
+
+    const isFullSuccess = flCount === 0;
     resultBox.style.display = 'block';
-    resultBox.style.background = isFullSuccess ? '#dcfce7' : (r.successCount > 0 ? '#fef3c7' : '#fee2e2');
-    resultBox.style.borderLeft = `4px solid ${isFullSuccess ? '#22c55e' : (r.successCount > 0 ? '#f59e0b' : '#ef4444')}`;
-    let html = `<strong>${r.message}</strong>`;
+    resultBox.style.background = isFullSuccess ? '#dcfce7' : (succCount > 0 ? '#fef3c7' : '#fee2e2');
+    resultBox.style.borderLeft = `4px solid ${isFullSuccess ? '#22c55e' : (succCount > 0 ? '#f59e0b' : '#ef4444')}`;
+    let html = `<strong>${msg}</strong>`;
     if (r.errors && r.errors.length > 0) {
-      html += '<ul style="margin:8px 0 0 16px;">' + r.errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+      html += '<ul style="margin:8px 0 0 16px;">' + r.errors.map(e => `<li>${e.username ? e.username+': ' : ''}${e.error || e}</li>`).join('') + '</ul>';
     }
     resultBox.innerHTML = html;
 
-    if (r.successCount > 0) { toast(`${r.successCount} pengguna berhasil diimpor!`, 'success'); await _loadUsers(); }
+    if (succCount > 0) { toast(`${succCount} pengguna berhasil diimpor!`, 'success'); await _loadUsers(); }
   }
 
   function showRegisterAppModal() {
