@@ -719,8 +719,8 @@ const App = (() => {
             </div>
           </div>
         </td>
-        <td style="font-size:11px;color:var(--text);line-height:1.4;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? [...u.apps].sort((a, b) => a.localeCompare(b)).join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
-        <td style="font-size:11px;color:var(--text3);">${formatDateID(u.lastLogin)}</td>
+        <td style="font-size:11px;color:var(--text);line-height:1.4;white-space:nowrap;">${u.role === 'SUPER_ADMIN' ? '<span style="color:var(--gs);font-weight:600;"><i class="ti ti-apps"></i> Semua Aplikasi</span>' : ((u.apps && u.apps.length > 0) ? [...u.apps].sort((a, b) => a.localeCompare(b)).join('<br>') : '<span style="color:var(--text3)">—</span>')}</td>
+        <td style="font-size:11px;color:var(--text3);line-height:1.4;">${formatDateID(u.lastLogin, true)}</td>
         <td><div class="actions">
           ${isProtectedTarget ? '' : `
             <button class="action-btn" title="Edit" onclick="App.editUser('${u.userId}')"><i class="ti ti-edit"></i></button>
@@ -1509,15 +1509,14 @@ const App = (() => {
   // UI HELPERS
   // ══════════════════════════════════════════════════════
 
-  function formatDateID(isoStr) {
+  function formatDateID(isoStr, multiline = false) {
     if (!isoStr || isoStr === '-') return '—';
     try {
       const d = new Date(isoStr);
       if (isNaN(d.getTime())) return isoStr;
-      return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      }).format(d).replace(/\./g, ':');
+      const datePart = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
+      const timePart = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(d).replace(/\./g, ':');
+      return multiline ? `${datePart}<br>${timePart}` : `${datePart} ${timePart}`;
     } catch(e) { return isoStr; }
   }
 
