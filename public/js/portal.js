@@ -376,7 +376,7 @@ const App = (() => {
 
     // Load Capaian Program Prioritas
     const ppkpspApp = _apps.find(a => a.appName.toUpperCase().includes('PPKPSP'));
-    if (_user.role === 'USER' && ppkpspApp) {
+    if (_user.role === 'USER' && _user.unit_kerja && _user.unit_kerja.toUpperCase() === 'SATUAN PENDIDIKAN' && ppkpspApp) {
       document.getElementById('dashboard-priority-programs').style.display = 'block';
       const pGrid = document.getElementById('priority-programs-grid');
       pGrid.innerHTML = '<div style="color:var(--text3); font-size:13px;">Memuat data PPKPSP...</div>';
@@ -1677,3 +1677,5 @@ function openApp(url, appId) { App.openApp && App.openApp(url, appId); }
 
 window.App = App; // EXPOSE KE GLOBAL UNTUK INLINE ONCLICK
 window.addEventListener('load', App.init);
+
+
