@@ -625,6 +625,8 @@ const App = (() => {
     document.getElementById('inp-search-user').value = '';
     document.getElementById('filter-user-role').value = 'ALL';
     document.getElementById('filter-user-app').value = 'ALL';
+    _usersPerPage = 10;
+    document.getElementById('filter-user-perpage').value = '10';
     
     document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => cb.checked = (cb.value === 'ALL'));
     document.getElementById('label-jenjang').innerText = 'Semua Jenjang';
@@ -705,10 +707,10 @@ const App = (() => {
       return `
       <tr>
         <td style="text-align:center;"><input type="checkbox" class="cb-user" value="${u.userId}" data-username="${u.username}" onchange="App.updateBulkActions()" ${isProtectedTarget ? 'disabled title="Admin tidak dapat mengedit sesama Admin"' : ''} /></td>
-        <td><div style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>${u.fullName}</strong></div></td>
-        <td><div style="max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.username}</div></td>
-        <td><div style="max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; line-height:1.4;">${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</div></td>
-        <td style="font-size:12px;"><div style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${u.instansi || '<span style="color:var(--text3)">-</span>'}</div></td>
+        <td><div style="max-width:140px; word-break:break-word; white-space:normal;"><strong>${u.fullName}</strong></div></td>
+        <td><div style="max-width:100px; word-break:break-word; white-space:normal;">${u.username}</div></td>
+        <td><div style="max-width:130px; word-break:break-word; white-space:normal; font-size:11px; line-height:1.4;">${u.email || ''} ${u.email && u.whatsapp ? '<br>' : ''} ${u.whatsapp || ''}</div></td>
+        <td style="font-size:12px;"><div style="max-width:120px; word-break:break-word; white-space:normal;">${u.instansi || '<span style="color:var(--text3)">-</span>'}</div></td>
         <td style="font-size:12px;">${u.jenjang || 'Semua Jenjang'}<br><span style="color:var(--text3);font-size:11px;">${u.bentuk_pendidikan || 'Semua Bentuk'}</span></td>
         <td>
           <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
