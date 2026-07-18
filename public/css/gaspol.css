@@ -487,6 +487,9 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   #page-login { flex-direction: column; }
   .login-brand { width: 100%; padding: 40px 24px 30px 24px; display: flex; flex-direction: column; justify-content: center; min-height: auto; }
   .brand-logo { margin-bottom: 0; }
+  .brand-name h1 { font-size: 20px !important; }
+  .brand-icon { width: 48px; height: 48px; }
+  .brand-icon i { font-size: 24px; }
   .brand-desc, .brand-apps { display: none; }
   .login-form-area { padding: 24px; }
   .stats-grid { grid-template-columns: 1fr; }
@@ -495,6 +498,7 @@ nav.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
   .page-view { padding: 16px; }
   .modal { max-width: 90%; padding: 20px; }
 }
+
 
 
 
