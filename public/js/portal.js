@@ -205,6 +205,184 @@ const App = (() => {
     }
 
     _isLoggingOut = false;
+const URL_PARAMS = (() => {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    token: p.get('token') || '',
+    error: p.get('error') || '',
+    appId: p.get('appId') || '',
+    redirect: p.get('redirect') || '',
+  };
+})();
+
+const App = (() => {
+  let _token = null;
+  let _user  = null;
+  let _apps  = [];
+  let _allUsers = [];
+  let _allAdminApps = [];
+
+  // ── SLIDER LOGIC ───────────────────────────────────────
+  let sliderContainer, sliderThumb, sliderFill, sliderText;
+  let isDragging = false, startX = 0, thumbMaxMove = 0, isMagnetized = false;
+
+  function initSlider() {
+    sliderContainer = document.getElementById('slide-login');
+    if(!sliderContainer) return;
+    sliderThumb = document.getElementById('slide-login-thumb');
+    sliderFill = document.getElementById('slide-login-fill');
+    sliderText = document.getElementById('slide-login-text');
+    
+    sliderThumb.addEventListener('mousedown', startDrag);
+    sliderThumb.addEventListener('touchstart', startDrag, {passive: true});
+    window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchend', stopDrag);
+    window.addEventListener('mousemove', doDrag);
+    window.addEventListener('touchmove', doDrag, {passive: false});
+  }
+
+  function startDrag(e) {
+    if(sliderContainer.classList.contains('success') || sliderContainer.classList.contains('loading')) return;
+    isDragging = true;
+    isMagnetized = false;
+    sliderThumb.style.transition = 'none';
+    sliderFill.style.transition = 'none';
+    startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    thumbMaxMove = sliderContainer.clientWidth - sliderThumb.clientWidth - 8;
+  }
+
+  function doDrag(e) {
+    if (!isDragging) return;
+    let currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let moveX = currentX - startX;
+    if (moveX < 0) moveX = 0;
+    if (moveX > thumbMaxMove) moveX = thumbMaxMove;
+    
+    if (moveX > thumbMaxMove - 30) {
+      moveX = thumbMaxMove;
+      if (!isMagnetized) {
+        isMagnetized = true;
+        sliderThumb.style.transition = 'left 0.15s ease-out';
+        sliderFill.style.transition = 'width 0.15s ease-out';
+      }
+    } else {
+      if (isMagnetized) {
+        isMagnetized = false;
+        sliderThumb.style.transition = 'none';
+        sliderFill.style.transition = 'none';
+      }
+    }
+    
+    sliderThumb.style.left = (moveX + 4) + 'px';
+    sliderFill.style.width = (moveX + 24) + 'px';
+    
+    let opacity = 1 - (moveX / (thumbMaxMove * 0.5));
+    sliderText.style.opacity = opacity < 0 ? 0 : opacity;
+  }
+
+  function stopDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    let currentX = parseFloat(sliderThumb.style.left) - 4;
+    
+    if (currentX >= thumbMaxMove * 0.95) {
+      sliderContainer.classList.add('success');
+      let lockIcon = document.getElementById('slide-lock-icon');
+      if(lockIcon) lockIcon.innerHTML = '<i class="ti ti-lock-open"></i>';
+      
+      sliderThumb.style.transition = 'left 0.2s';
+      sliderFill.style.transition = 'width 0.2s';
+      sliderThumb.style.left = (thumbMaxMove + 4) + 'px';
+      sliderFill.style.width = '100%';
+      login();
+    } else {
+      resetSlider();
+    }
+  }
+
+  function resetSlider() {
+    if(!sliderContainer) return;
+    isMagnetized = false;
+    sliderThumb.style.transition = 'left 0.3s ease-out';
+    sliderFill.style.transition = 'width 0.3s ease-out';
+    sliderThumb.style.left = '4px';
+    sliderFill.style.width = '0';
+    sliderText.style.opacity = '1';
+    sliderText.innerHTML = 'Geser untuk Masuk';
+    sliderText.style.color = 'var(--text2)';
+    sliderThumb.innerHTML = '<i class="ti ti-chevrons-right"></i>';
+    sliderContainer.classList.remove('success', 'loading');
+    
+    let lockIcon = document.getElementById('slide-lock-icon');
+    if(lockIcon) lockIcon.innerHTML = '<i class="ti ti-lock"></i>';
+  }
+
+  function setSliderLoading() {
+    if(!sliderContainer) return;
+    sliderContainer.classList.add('loading');
+    sliderText.innerHTML = 'Memproses...';
+    sliderText.style.opacity = '1';
+    sliderText.style.zIndex = '4';
+    sliderText.style.color = 'white';
+    sliderFill.style.width = '100%';
+    sliderThumb.style.left = (sliderContainer.clientWidth - sliderThumb.clientWidth - 4) + 'px';
+    sliderThumb.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px; border-top-color:white;"></div>';
+  }
+
+  // ── INIT ───────────────────────────────────────────────
+  async function init() {
+    setTopbarDate();
+    const p = URL_PARAMS;
+
+    // Tambahkan listener untuk Cross-Tab Single Sign-Out (SLO)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'gaspol_token' && e.oldValue && !e.newValue) {
+        // Token dihapus dari tab lain (Logout / Timeout)
+        forceLogout('Sesi Anda diakhiri dari tab lain.');
+      }
+    });
+
+    if (p.error) {
+      const errEl = document.getElementById('err-login');
+      if (errEl) { errEl.textContent = decodeURIComponent(p.error); errEl.style.display = 'block'; }
+    }
+
+    // Cek token tersimpan di localStorage
+    const saved = localStorage.getItem('gaspol_token');
+    if (saved) {
+      _token = saved;
+      try {
+        const r = await apiPost({ action: 'validateToken', token: _token });
+        if (r.valid) {
+          _user = r.user; _apps = r.apps;
+          await _loadPostLogin();
+          _startHeartbeat(); // Mulai heartbeat
+          return;
+        }
+      } catch (e) { console.error('Validate err:', e); }
+      // Token tidak valid -> buang
+      localStorage.removeItem('gaspol_token');
+      _token = '';
+    }
+
+    hideLoading();
+    document.getElementById('page-login').classList.remove('hidden');
+  }
+
+  // ── LOGIN ──────────────────────────────────────────────
+  async function login() {
+    const username = document.getElementById('inp-username').value.trim();
+    const password = document.getElementById('inp-password').value;
+    const errEl    = document.getElementById('err-login');
+
+    errEl.style.display = 'none';
+    if (!username || !password) {
+      errEl.textContent  = 'Harap isi username dan password.';
+      errEl.style.display = 'block';
+      resetSlider();
+      return;
+    }
+
     setSliderLoading();
 
     const appId     = URL_PARAMS.appId || '';
@@ -220,10 +398,19 @@ const App = (() => {
       return;
     }
 
+    _user = r.user;
+    _apps = r.apps || [];
     _token = r.token;
-    _user  = r.user;
-    _apps  = r.apps || [];
     localStorage.setItem('gaspol_token', _token);
+    
+    // Paksa update event untuk tab lain agar refresh sesi jika sebelumnya error
+    localStorage.setItem('gaspol_sess_state', JSON.stringify({ state: 'login', ts: Date.now() }));
+
+    // Cek ganti password default
+    if (_user.isDefaultPassword) {
+      showView('view-profile', document.getElementById('nav-profile'));
+      setTimeout(showEditProfileModal, 500);
+    }
 
     // Jika ada redirect (dari child app), kembalikan ke sana
     if (redirect && appId) {
@@ -233,6 +420,7 @@ const App = (() => {
     }
 
     await _loadPostLogin();
+    _startHeartbeat(); // Mulai heartbeat
     showApp();
     resetSlider();
     toast('Selamat datang, ' + _user.fullName + '!', 'success');
@@ -244,29 +432,37 @@ const App = (() => {
 
   // ── LOGOUT ─────────────────────────────────────────────
   async function logout() {
-    const ok = await showConfirm('Konfirmasi Keluar', 'Apakah Anda yakin ingin keluar dari sesi saat ini?', true);
-    if (!ok) return;
-    await forceLogout('Anda telah keluar dari GASPOL.');
+    if (!_token) return;
+    try { await apiPost({ action: 'logout', token: _token }); } catch(e) {}
+    localStorage.removeItem('gaspol_token');
+    localStorage.setItem('gaspol_sess_state', JSON.stringify({ state: 'logout', ts: Date.now() }));
+    // Hapus session cookie jika ada
+    document.cookie = "gaspol_token=; path=/; max-age=0;";
+    _stopHeartbeat();
+    window.location.href = window.location.pathname;
   }
 
   let _isLoggingOut = false;
-  let _heartbeatInterval = null;
 
   async function forceLogout(message) {
     if (_isLoggingOut) return;
     _isLoggingOut = true;
     
-    if (_heartbeatInterval) { clearInterval(_heartbeatInterval); _heartbeatInterval = null; }
+    if (message) toast(message, 'error');
     
     if (_token) {
         apiGet('logout', { token: _token }, false).catch(() => {});
     }
+    _token = null; _user = null; _apps = [];
     localStorage.removeItem('gaspol_token');
+    // Hapus session cookie
+    document.cookie = "gaspol_token=; path=/; max-age=0;";
+    _stopHeartbeat();
     try {
       localStorage.setItem('gaspol_sess_state', JSON.stringify({ state: 'logout', ts: Date.now() }));
       new BroadcastChannel('gaspol_sso_channel').postMessage({ type: 'LOGOUT', reason: 'portal_logout' });
     } catch(e) {}
-    _token = null; _user = null; _apps = [];
+    
     document.getElementById('page-app').classList.add('hidden');
     document.getElementById('page-login').classList.remove('hidden');
       
@@ -289,7 +485,6 @@ const App = (() => {
       }
     });
 
-    toast(message || 'Anda telah keluar.', 'info');
     setTimeout(() => { _isLoggingOut = false; }, 3000);
   }
 
@@ -334,12 +529,6 @@ const App = (() => {
       const statSessions = document.getElementById('stat-card-sessions');
       if (statSessions) statSessions.style.display = 'none';
     }
-
-    if (_heartbeatInterval) clearInterval(_heartbeatInterval);
-    _heartbeatInterval = setInterval(() => {
-      if (!_token) { clearInterval(_heartbeatInterval); _heartbeatInterval = null; return; }
-      apiGet('getStats', { token: _token }, false).catch(() => {});
-    }, 4 * 60 * 1000);
   }
 
   // ── Render sidebar info user ───────────────────────────
@@ -833,796 +1022,6 @@ const App = (() => {
     if (btn) btn.className = 'btn-add';
 
     if (tab === 'ai-config' && !_aiConfigLoaded) loadAIConfig();
-    if (tab === 'users') resetUsersFilter();
-    if (tab === 'online-users' && !_onlineUsersLoaded) loadOnlineUsers();
-  }
-
-  let _onlineUsersLoaded = false;
-  let _onlineUsersList = [];
-
-  async function loadOnlineUsers() {
-    const tbody = document.getElementById('tbody-online-users');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:auto;"></div></td></tr>';
-    const r = await apiPost({ action: 'getOnlineUsers', token: _token });
-    _onlineUsersLoaded = true;
-    if (!r.success) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">Gagal memuat: ${r.error}</td></tr>`;
-      return;
-    }
-    _onlineUsersList = r.onlineUsers || [];
-    _renderOnlineUsersTable();
-  }
-
-  function _renderOnlineUsersTable() {
-    const tbody = document.getElementById('tbody-online-users');
-    if (_onlineUsersList.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;font-size:13px;color:var(--text3);">Tidak ada pengguna aktif.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = _onlineUsersList.map(s => {
-      const statusHtml = s.isIdle ? '<span class="status-badge status-maintenance">Idle</span>' : '<span class="status-badge status-active">Aktif</span>';
-      return `
-        <tr>
-          <td>
-            <div style="font-weight:600;font-size:13px;color:var(--text);">${s.fullName}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${s.username}</div>
-          </td>
-          <td><span class="role-badge role-user" style="background:#f1f5f9;color:var(--text2);">${s.appName}</span></td>
-          <td style="font-size:12px;color:var(--text2);">${formatDateID(s.lastActivity)}</td>
-          <td>${statusHtml}</td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  let _aiConfigLoaded = false;
-  let _aiApiList = [];
-
-  async function loadAIConfig() {
-    const tbody = document.getElementById('ai-api-list-tbody');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><div class="spinner" style="width:20px;height:20px;border-width:2px;margin:auto;"></div></td></tr>';
-    const r = await apiPost({ action: 'getAIConfig', token: _token });
-    _aiConfigLoaded = true;
-    if (!r.success) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">Gagal memuat konfigurasi.</td></tr>';
-      return;
-    }
-    _aiApiList = r.apiList || [];
-    _renderAIConfigTable();
-  }
-
-  function _renderAIConfigTable() {
-    const tbody = document.getElementById('ai-api-list-tbody');
-    if (_aiApiList.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;font-size:13px;color:var(--text3);">Belum ada konfigurasi API AI.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = _aiApiList.map(api => {
-      let allowedAppsDisplay = '<span style="color:var(--text3);font-style:italic;">Tidak ada (Ditolak)</span>';
-      if (api.allowedApps) {
-        const appsIds = api.allowedApps.split(',').map(a => a.trim());
-        allowedAppsDisplay = appsIds.map(id => {
-          const app = _allAdminApps.find(a => a.appId === id);
-          return app ? `<span style="background:var(--bg);padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:2px;"><i class="ti ${app.appIcon || 'ti-app'}" style="color:${app.color}"></i> ${app.appName}</span>` : `<span style="background:var(--bg);padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:2px;">${id}</span>`;
-        }).join(' ');
-      }
-      return `
-      <tr>
-        <td style="font-weight:600; color:var(--gs);">Gemini (Otomatis)</td>
-        <td><span style="font-family:monospace;background:#f0f4f8;padding:4px 8px;border-radius:4px;">${api.apiKeyHint || 'Tidak ada hint'}</span></td>
-        <td style="font-size:12px;line-height:1.6;">${allowedAppsDisplay}</td>
-        <td style="text-align:right;"><div class="actions" style="justify-content:flex-end;">
-          <button class="action-btn" title="Edit" onclick="App.editAIModal('${api.id}')"><i class="ti ti-edit"></i></button>
-          <button class="action-btn danger" title="Hapus" onclick="App.deleteAIConfig('${api.id}')"><i class="ti ti-trash"></i></button>
-        </div></td>
-      </tr>`;
-    }).join('');
-  }
-
-  function showAddAIModal() {
-    document.getElementById('m-ai-title').textContent = 'Tambah Konfigurasi AI';
-    document.getElementById('m-ai-id').value = '';
-    document.getElementById('m-ai-apikey').value = '';
-    document.querySelectorAll('.cb-ai-model').forEach(cb => { cb.checked = cb.value === 'gemini-3-flash-preview'; });
-    _renderAIAppChecklist([]);
-    document.getElementById('modal-ai-config').classList.remove('hidden');
-  }
-
-  function editAIModal(id) {
-    const api = _aiApiList.find(a => a.id === id);
-    if (!api) return;
-    document.getElementById('m-ai-title').textContent = 'Edit Konfigurasi AI';
-    document.getElementById('m-ai-id').value = api.id;
-    document.getElementById('m-ai-apikey').value = api.apiKey || '';
-    const modelsArr = (api.models || '').split(',').map(m => m.trim());
-    document.querySelectorAll('.cb-ai-model').forEach(cb => { cb.checked = modelsArr.includes(cb.value); });
-    const allowedApps = (api.allowedApps || '').split(',').map(a => a.trim()).filter(a => a);
-    _renderAIAppChecklist(allowedApps);
-    document.getElementById('modal-ai-config').classList.remove('hidden');
-  }
-  
-  function _renderAIAppChecklist(selectedApps) {
-    const listEl = document.getElementById('m-ai-apps-list');
-    if (_allAdminApps.length === 0) {
-      listEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">Belum ada aplikasi yang terdaftar.</div>';
-      return;
-    }
-    listEl.innerHTML = _allAdminApps.map(app => {
-      const checked = selectedApps.includes(app.appId) ? 'checked' : '';
-      return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:6px;">
-          <input type="checkbox" class="cb-ai-app" value="${app.appId}" ${checked} />
-          <i class="ti ${app.appIcon || 'ti-app'}" style="color:${app.color}"></i>
-          <span>${app.appName}</span>
-        </label>`;
-    }).join('');
-  }
-
-  async function saveAIModal() {
-    const id = document.getElementById('m-ai-id').value;
-    const apiKey = document.getElementById('m-ai-apikey').value.trim();
-    const models = Array.from(document.querySelectorAll('.cb-ai-model:checked')).map(cb => cb.value).join(',');
-    const allowedApps = Array.from(document.querySelectorAll('.cb-ai-app:checked')).map(cb => cb.value).join(',');
-
-    if (!id && !apiKey) { toast('API Key wajib diisi untuk entri baru.', 'error'); return; }
-
-    let newList = JSON.parse(JSON.stringify(_aiApiList));
-    if (id) {
-      const idx = newList.findIndex(a => a.id === id);
-      if (idx !== -1) {
-        if (apiKey) newList[idx].apiKey = apiKey;
-        newList[idx].models = models;
-        newList[idx].allowedApps = allowedApps;
-      }
-    } else {
-      newList.push({ id: 'ai_' + new Date().getTime(), apiKey, models, allowedApps, maxTokens: 2048 });
-    }
-
-    const r = await apiPost({ action: 'saveAIConfigList', token: _token, apiList: newList });
-    if (r.success) { toast('Konfigurasi AI berhasil disimpan!', 'success'); closeModal('modal-ai-config'); await loadAIConfig(); }
-    else toast(r.error || 'Gagal menyimpan konfigurasi AI.', 'error');
-  }
-
-  async function deleteAIConfig(id) {
-    const ok = await showConfirm('Hapus Konfigurasi AI', 'Yakin ingin menghapus konfigurasi API Key ini?', true);
-    if (!ok) return;
-    const r = await apiPost({ action: 'saveAIConfigList', token: _token, apiList: _aiApiList.filter(a => a.id !== id) });
-    if (r.success) { toast('Konfigurasi berhasil dihapus.', 'success'); await loadAIConfig(); }
-    else toast(r.error || 'Gagal menghapus.', 'error');
-  }
-
-  // ── Modals ─────────────────────────────────────────────
-  function showCreateUserModal() {
-    ['m-fullname','m-username','m-email','m-whatsapp','m-password'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('m-role').value = 'USER';
-    document.getElementById('modal-create-user').classList.remove('hidden');
-  }
-
-  // ── Import Massal ──────────────────────────────────────
-  let _importRows = [];
-
-  function showImportModal() {
-    _importRows = [];
-    document.getElementById('import-result-box').style.display = 'none';
-    document.getElementById('import-preview-stats').style.display = 'none';
-    document.getElementById('inp-import-csv').value = '';
-    _renderImportTable([{}, {}, {}]);
-    document.getElementById('modal-import-users').classList.remove('hidden');
-  }
-
-  function _importRowHtml(idx, data) {
-    const roles = ['USER','ADMIN','SUPER_ADMIN'];
-    const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
-    return `<tr style="background:${rowBg};" id="import-row-${idx}">
-      <td style="padding:6px 10px;text-align:center;color:var(--text3);font-size:12px;">${idx+1}</td>
-      <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="Nama Lengkap" value="${data.fullName||''}" oninput="App.updateImportCell(${idx},'fullName',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
-      <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="username" value="${data.username||''}" oninput="App.updateImportCell(${idx},'username',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
-      <td style="padding:4px 6px;"><input class="form-input" type="email" placeholder="email@..." value="${data.email||''}" oninput="App.updateImportCell(${idx},'email',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
-      <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="08xx..." value="${data.whatsapp||''}" oninput="App.updateImportCell(${idx},'whatsapp',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
-      <td style="padding:4px 6px;"><input class="form-input" type="text" placeholder="(def: user+12345)" value="${data.password||''}" oninput="App.updateImportCell(${idx},'password',this.value)" style="padding:6px 10px;font-size:12px;"/></td>
-      <td style="padding:4px 6px;">
-        <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="App.updateImportCell(${idx},'instansi',this.value)">
-          <option value="" ${(data.instansi||'')===''?'selected':''}>-- Pilih --</option>
-          <option value="BPMP" ${(data.instansi||'')==='BPMP'?'selected':''}>BPMP</option>
-          <option value="Dinas Pendidikan" ${(data.instansi||'')==='Dinas Pendidikan'?'selected':''}>Dinas Pendidikan</option>
-          <option value="Pengawas Sekolah" ${(data.instansi||'')==='Pengawas Sekolah'?'selected':''}>Pengawas Sekolah</option>
-          <option value="Satuan Pendidikan" ${(data.instansi||'')==='Satuan Pendidikan'?'selected':''}>Satuan Pendidikan</option>
-        </select>
-      </td>
-      <td style="padding:4px 6px;">
-        <select class="form-input" style="padding:6px 10px;font-size:12px;" onchange="App.updateImportCell(${idx},'role',this.value)">
-          ${roles.map(r => `<option value="${r}" ${(data.role||'USER')===r?'selected':''}>${r}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:4px 10px;text-align:center;">
-        <button onclick="App.removeImportRow(${idx})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:18px;" title="Hapus baris"><i class="ti ti-x"></i></button>
-      </td>
-    </tr>`;
-  }
-
-  function _renderImportTable(rows = _importRows) {
-    _importRows = rows.map(r => Object.assign({}, r));
-    document.getElementById('import-users-tbody').innerHTML = _importRows.map((r, i) => _importRowHtml(i, r)).join('');
-    _updateImportStats();
-  }
-
-  function _updateImportStats() {
-    const filled = _importRows.filter(r => (r.fullName||'').trim() && (r.username||'').trim()).length;
-    const statsEl = document.getElementById('import-preview-stats');
-    const statsText = document.getElementById('import-stats-text');
-    if (_importRows.length > 0) {
-      statsEl.style.display = 'block';
-      statsText.textContent = `${_importRows.length} baris total | ${filled} baris valid (Nama & Username terisi)`;
-    } else {
-      statsEl.style.display = 'none';
-    }
-  }
-
-  function updateImportCell(idx, field, value) {
-    if (_importRows[idx]) _importRows[idx][field] = value;
-    _updateImportStats();
-  }
-
-  function addImportRow() {
-    _importRows.push({});
-    const tbody = document.getElementById('import-users-tbody');
-    tbody.insertAdjacentHTML('beforeend', _importRowHtml(_importRows.length - 1, {}));
-    _updateImportStats();
-    tbody.parentElement.scrollTop = tbody.parentElement.scrollHeight;
-  }
-
-  function removeImportRow(idx) {
-    _importRows.splice(idx, 1);
-    _renderImportTable(_importRows);
-  }
-
-  function handleImportCSV(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-        if (json.length < 2) { toast('File Excel kosong atau hanya berisi header.', 'error'); return; }
-        
-        const headers = (json[0] || []).map(h => (h||'').toString().toLowerCase().trim());
-        const rows = json.slice(1).map(cols => {
-          const obj = {};
-          headers.forEach((h, i) => { obj[h] = (cols[i] || '').toString().trim(); });
-          return {
-            fullName : obj['nama lengkap'] || obj['fullname'] || obj['nama'] || '',
-            username : obj['username'] || obj['npsn'] || '',
-            email    : obj['email'] || '',
-            whatsapp : obj['no hp'] || obj['whatsapp'] || obj['hp'] || obj['wa'] || '',
-            password : obj['password'] || '',
-            instansi : obj['instansi'] || '',
-            role     : (obj['role'] || 'USER').toUpperCase()
-          };
-        }).filter(r => r.fullName && r.username);
-        
-        _renderImportTable(rows);
-        toast(`${rows.length} baris berhasil dimuat dari Excel.`, 'success');
-      };
-      reader.readAsArrayBuffer(file);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const text = e.target.result;
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      if (lines.length < 2) { toast('File CSV kosong atau hanya berisi header.', 'error'); return; }
-      const sep = lines[0].includes(';') ? ';' : ',';
-      const headers = lines[0].split(sep).map(h => h.replace(/"/g,'').trim().toLowerCase());
-      const rows = lines.slice(1).map(line => {
-        const cols = line.split(sep).map(c => c.replace(/^"|"$/g,'').trim());
-        const obj = {};
-        headers.forEach((h, i) => { obj[h] = cols[i] || ''; });
-        return {
-          fullName : obj['nama lengkap'] || obj['fullname'] || obj['nama'] || '',
-          username : obj['username'] || obj['npsn'] || '',
-          email    : obj['email'] || '',
-          whatsapp : obj['no hp'] || obj['whatsapp'] || obj['hp'] || obj['wa'] || '',
-          password : obj['password'] || '',
-          instansi : obj['instansi'] || '',
-          role     : (obj['role'] || 'USER').toUpperCase(),
-        };
-      }).filter(r => r.fullName && r.username);
-      if (rows.length > 500) { toast('Maksimal 500 baris per import.', 'error'); return; }
-      _renderImportTable(rows);
-      toast(`${rows.length} baris berhasil dimuat dari CSV.`, 'success');
-    };
-    reader.readAsText(file);
-  }
-
-  function downloadImportTemplate() {
-    if (typeof XLSX !== 'undefined') {
-      const ws_data = [
-        ['Nama Lengkap', 'Username', 'Email', 'No HP', 'Password', 'Instansi', 'Role'],
-        ['SDN 001 Palangka Raya', '1023456789', '', '', '', 'Satuan Pendidikan', 'USER'],
-        ['SDN 002 Palangka Raya', '1023456790', '', '', '', 'Satuan Pendidikan', 'USER'],
-        ['SMPN 1 Palangka Raya', '1023456791', '', '', '', 'Satuan Pendidikan', 'USER']
-      ];
-      const ws = XLSX.utils.aoa_to_sheet(ws_data);
-      const wscols = [ {wch: 25}, {wch: 15}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 10} ];
-      ws['!cols'] = wscols;
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Template");
-      XLSX.writeFile(wb, "template_import_pengguna.xlsx");
-    } else {
-      const header = 'Nama Lengkap,Username,Email,No HP,Password,Instansi,Role';
-      const contoh = ['SDN 001 Palangka Raya,1023456789,,,,Satuan Pendidikan,USER','SDN 002 Palangka Raya,1023456790,,,,Satuan Pendidikan,USER','SMPN 1 Palangka Raya,1023456791,,,,Satuan Pendidikan,USER'].join('\n');
-      const blob = new Blob([header + '\n' + contoh], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'template_import_pengguna.csv';
-      a.click();
-    }
-  }
-
-  async function doImportUsers() {
-    const valid = _importRows.filter(r => (r.fullName||'').trim() && (r.username||'').trim());
-    if (valid.length === 0) { toast('Tidak ada data valid untuk diimpor.', 'error'); return; }
-
-    const btn = document.getElementById('btn-do-import');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></div> Memproses...';
-
-    const resultBox = document.getElementById('import-result-box');
-    resultBox.style.display = 'none';
-
-    const r = await apiPost({ action: 'bulkCreateUsers', token: _token, usersData: valid });
-
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-upload"></i> Proses Import';
-
-    if (!r.success && (r.successCount === undefined && r.created === undefined)) { toast(r.error || 'Gagal melakukan import.', 'error'); return; }
-
-    const succCount = r.successCount !== undefined ? r.successCount : (r.created || 0);
-    const flCount = r.failCount !== undefined ? r.failCount : (r.errors ? r.errors.length : 0);
-    const msg = r.message || `Berhasil import ${succCount} pengguna, Gagal ${flCount} pengguna.`;
-
-    const isFullSuccess = flCount === 0;
-    resultBox.style.display = 'block';
-    resultBox.style.background = isFullSuccess ? '#dcfce7' : (succCount > 0 ? '#fef3c7' : '#fee2e2');
-    resultBox.style.borderLeft = `4px solid ${isFullSuccess ? '#22c55e' : (succCount > 0 ? '#f59e0b' : '#ef4444')}`;
-    let html = `<strong>${msg}</strong>`;
-    if (r.errors && r.errors.length > 0) {
-      html += '<ul style="margin:8px 0 0 16px;">' + r.errors.map(e => `<li>${e.username ? e.username+': ' : ''}${e.error || e}</li>`).join('') + '</ul>';
-    }
-    resultBox.innerHTML = html;
-
-    if (succCount > 0) { toast(`${succCount} pengguna berhasil diimpor!`, 'success'); await _loadUsers(); }
-  }
-
-  function showRegisterAppModal() {
-    ['ra-name','ra-url','ra-desc','ra-icon'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('ra-color').value = '#1E90FF';
-    document.getElementById('modal-register-app').classList.remove('hidden');
-  }
-  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-  // ── CRUD Operations ────────────────────────────────────
-  async function createUser() {
-    const data = {
-      action: 'createUser', token: _token,
-      fullName: document.getElementById('m-fullname').value.trim(),
-      username: document.getElementById('m-username').value.trim(),
-      email: document.getElementById('m-email').value.trim(),
-      whatsapp: document.getElementById('m-whatsapp').value.trim(),
-      password: document.getElementById('m-password').value,
-      role: document.getElementById('m-role').value,
-      instansi: document.getElementById('m-instansi').value,
-    };
-    const r = await apiPost(data);
-    if (r.success) { closeModal('modal-create-user'); toast('Pengguna berhasil dibuat.', 'success'); await _loadUsers(); }
-    else toast(r.error || 'Gagal membuat pengguna.', 'error');
-  }
-
-  async function registerApp() {
-    const data = {
-      action: 'registerApp', token: _token,
-      appName: document.getElementById('ra-name').value.trim(),
-      appUrl: document.getElementById('ra-url').value.trim(),
-      description: document.getElementById('ra-desc').value.trim(),
-      appIcon: document.getElementById('ra-icon').value.trim() || 'ti-apps',
-      color: document.getElementById('ra-color').value,
-    };
-    const r = await apiPost(data);
-    if (r.success) { closeModal('modal-register-app'); toast('Aplikasi berhasil didaftarkan. Secret Key: ' + r.app.secretKey, 'success'); _apps = []; await _loadPostLogin(); await _loadAdminApps(); }
-    else toast(r.error || 'Gagal mendaftarkan aplikasi.', 'error');
-  }
-
-  function handleProfilePhotoUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast('Ukuran foto maksimal 2MB.', 'error'); return; }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = async function() {
-        const canvas = document.createElement('canvas');
-        const maxSize = 250;
-        let width = img.width, height = img.height;
-        if (width > height) { if (width > maxSize) { height = Math.round((height * maxSize) / width); width = maxSize; } }
-        else { if (height > maxSize) { width = Math.round((width * maxSize) / height); height = maxSize; } }
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, width, height);
-        const base64Photo = canvas.toDataURL('image/jpeg', 0.8);
-        const r = await apiPost({ action: 'updateUser', token: _token, targetUserId: _user.userId, photo: base64Photo });
-        if (r.success) { _user.photo = base64Photo; _renderSidebar(); _renderProfileView(); toast('Foto profil berhasil diperbarui.', 'success'); }
-        else toast(r.error || 'Gagal menyimpan foto.', 'error');
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  function showEditProfileModal() {
-    document.getElementById('ep-email').value = _user.email || '';
-    document.getElementById('ep-whatsapp').value = _user.whatsapp || '';
-    document.getElementById('modal-edit-profile').classList.remove('hidden');
-  }
-
-  async function saveEditProfile() {
-    const data = { action: 'updateUser', token: _token, targetUserId: _user.userId, email: document.getElementById('ep-email').value.trim(), whatsapp: document.getElementById('ep-whatsapp').value.trim() };
-    const r = await apiPost(data);
-    if (r.success) { toast('Profil berhasil diperbarui.', 'success'); closeModal('modal-edit-profile'); _user.email = data.email; _user.whatsapp = data.whatsapp; _renderProfileView(); }
-    else toast(r.error || 'Gagal menyimpan profil.', 'error');
-  }
-
-  async function changePassword() {
-    const oldPass = document.getElementById('inp-old-pass').value;
-    const newPass = document.getElementById('inp-new-pass').value;
-    const confirmPass = document.getElementById('inp-confirm-pass').value;
-    if (newPass !== confirmPass) { toast('Konfirmasi password tidak cocok.', 'error'); return; }
-    if (newPass.length < 8) { toast('Password baru minimal 8 karakter.', 'error'); return; }
-    const r = await apiPost({ action: 'changePassword', token: _token, oldPassword: oldPass, newPassword: newPass });
-    if (r.success) { toast('Password berhasil diubah. Silakan login ulang.', 'success'); setTimeout(() => forceLogout('Sesi diakhiri karena password diubah.'), 2000); }
-    else toast(r.error || 'Gagal mengganti password.', 'error');
-  }
-
-  async function deleteUser(userId, username) {
-    const ok = await showConfirm('Hapus Pengguna', `Hapus pengguna "${username}"? Tindakan ini tidak dapat dibatalkan.`, true);
-    if (!ok) return;
-    const r = await apiPost({ action: 'deleteUser', token: _token, targetUserId: userId });
-    if (r.success) { toast('Pengguna dihapus.', 'success'); await _loadUsers(); }
-    else toast(r.error || 'Gagal menghapus pengguna.', 'error');
-  }
-
-  async function resetUserPassword(userId, username) {
-    const ok = await showConfirm('Reset Password', `Reset password untuk "${username}"? Password baru: ${username}12345`, false);
-    if (!ok) return;
-    const r = await apiPost({ action: 'resetPassword', token: _token, targetUserId: userId, newPassword: username + '12345' });
-    if (r.success) { toast('Password berhasil direset menjadi ' + username + '12345', 'success'); await _loadUsers(); }
-    else toast(r.error || 'Gagal reset password.', 'error');
-  }
-
-  // ── Bulk Actions ───────────────────────────────────────
-  function toggleAllUsers(checked) {
-    document.querySelectorAll('.cb-user:not(:disabled)').forEach(cb => cb.checked = checked);
-    updateBulkActions();
-  }
-
-  function updateBulkActions() {
-    const checked = document.querySelectorAll('.cb-user:checked');
-    const bulkDiv = document.getElementById('bulk-actions');
-    const countEl = document.getElementById('bulk-count');
-    if (checked.length > 0) { countEl.innerText = checked.length; bulkDiv.style.display = 'flex'; }
-    else { bulkDiv.style.display = 'none'; document.getElementById('cb-all-users').checked = false; }
-  }
-
-  async function bulkResetPassword() {
-    const checked = document.querySelectorAll('.cb-user:checked');
-    if (checked.length === 0) return;
-    const userIds = Array.from(checked).map(cb => cb.value);
-    const usernames = Array.from(checked).map(cb => cb.getAttribute('data-username'));
-    const ok = await showConfirm('Reset Sandi Massal', `Reset sandi untuk ${checked.length} pengguna terpilih?<br><br><span style="font-size:12px;color:var(--text3);">${usernames.slice(0, 5).join(', ')}${usernames.length > 5 ? ` dan ${usernames.length - 5} lainnya` : ''}</span><br><br>Sandi baru: [username]12345`, false);
-    if (!ok) return;
-    const r = await apiPost({ action: 'bulkResetPassword', token: _token, userIds });
-    if (r.success) { toast(r.message || 'Sandi berhasil direset.', 'success'); await _loadUsers(); }
-    else toast(r.error || 'Gagal mereset sandi massal.', 'error');
-  }
-
-  async function bulkDeleteUser() {
-    const checked = document.querySelectorAll('.cb-user:checked');
-    if (checked.length === 0) return;
-    const userIds = Array.from(checked).map(cb => cb.value);
-    const usernames = Array.from(checked).map(cb => cb.getAttribute('data-username'));
-    const ok = await showConfirm('Hapus Pengguna Massal', `Hapus ${checked.length} pengguna secara permanen?<br><br><span style="font-size:12px;color:var(--text3);">${usernames.slice(0, 5).join(', ')}${usernames.length > 5 ? ` dan ${usernames.length - 5} lainnya` : ''}</span><br><br>Tindakan ini tidak dapat dibatalkan.`, true);
-    if (!ok) return;
-    const r = await apiPost({ action: 'bulkDeleteUser', token: _token, userIds });
-    if (r.success) { toast(r.message || 'Pengguna berhasil dihapus.', 'success'); await _loadUsers(); }
-    else toast(r.error || 'Gagal menghapus massal.', 'error');
-  }
-
-  async function bulkEditAccess() {
-    const checked = document.querySelectorAll('.cb-user:checked');
-    if (checked.length === 0) return;
-    const usernames = Array.from(checked).map(cb => cb.getAttribute('data-username'));
-    const descEl = document.getElementById('bulk-access-desc');
-    if (descEl) descEl.textContent = `${checked.length} pengguna terpilih: ${usernames.slice(0,3).join(', ')}${usernames.length > 3 ? ` dan ${usernames.length - 3} lainnya` : ''}`;
-    const modeReplace = document.getElementById('ba-mode-replace');
-    if (modeReplace) modeReplace.checked = true;
-    const appListEl = document.getElementById('bulk-access-apps-list');
-    if (!appListEl) return;
-    
-    let userAccessMap = {};
-    if (checked.length === 1) {
-      const userId = checked[0].value;
-      const r = await apiGet('getUserAccess', { token: _token, targetUserId: userId });
-      if (r.success) { r.accesses.forEach(a => { userAccessMap[a.appId] = a.appRole || 'user'; }); }
-    }
-    
-    if (!_allAdminApps.length) {
-      appListEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">Belum ada aplikasi yang terdaftar.</div>';
-    } else {
-      appListEl.innerHTML = _allAdminApps.map(app => `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:6px 8px;border-radius:6px;background:#fff;border:1px solid var(--border);">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;flex:1;">
-            <input type="checkbox" class="cb-bulk-app" value="${app.appId}" data-appname="${app.appName}"
-              ${userAccessMap[app.appId] ? 'checked' : ''}
-              onchange="document.getElementById('bulk-app-role-${app.appId}').disabled = !this.checked;" />
-            <i class="ti ${app.appIcon || 'ti-app'}" style="color:${app.color};"></i>
-            <span>${app.appName}</span>
-          </label>
-          <select id="bulk-app-role-${app.appId}" class="form-input" style="width:100px;padding:4px 8px;font-size:12px;" ${userAccessMap[app.appId] ? '' : 'disabled'}>
-            <option value="user" ${userAccessMap[app.appId] === 'user' ? 'selected' : ''}>User</option>
-            <option value="admin" ${userAccessMap[app.appId] === 'admin' ? 'selected' : ''}>Admin</option>
-            <option value="viewer" ${userAccessMap[app.appId] === 'viewer' ? 'selected' : ''}>Viewer</option>
-          </select>
-        </div>
-      `).join('');
-    }
-    document.getElementById('modal-bulk-access').classList.remove('hidden');
-  }
-
-  async function saveBulkEditAccess() {
-    const checkedUsers = document.querySelectorAll('.cb-user:checked');
-    const checkedApps  = document.querySelectorAll('.cb-bulk-app:checked');
-    if (checkedUsers.length === 0) { toast('Tidak ada pengguna terpilih.', 'error'); return; }
-    const userIds = Array.from(checkedUsers).map(cb => cb.value);
-    
-    const mode = document.querySelector('input[name="bulk-access-mode"]:checked');
-    const modeValue = mode ? mode.value : 'replace';
-    
-    let replaceMode = false;
-    let appAccesses = [];
-    
-    if (modeValue === 'clear') {
-      replaceMode = true;
-      appAccesses = []; // empty array will just delete all and not insert
-    } else {
-      replaceMode = (modeValue === 'replace');
-      appAccesses = Array.from(checkedApps).map(cb => {
-        const roleEl = document.getElementById('bulk-app-role-' + cb.value);
-        return { appId: cb.value, appRole: roleEl ? roleEl.value : 'user' };
-      });
-      if (modeValue === 'add' && appAccesses.length === 0) {
-        toast('Pilih minimal satu aplikasi untuk ditambahkan.', 'error'); return;
-      }
-    }
-    
-    let confirmMsg = `Menerapkan akses ${appAccesses.length} aplikasi ke ${checkedUsers.length} pengguna?<br><br><span style="font-size:12px;color:var(--text3);">Mode: ${replaceMode ? 'Ganti Semua' : 'Tambah Saja'}</span>`;
-    if (modeValue === 'clear') {
-      confirmMsg = `Apakah Anda yakin ingin <b>MENGHAPUS SEMUA</b> akses aplikasi untuk ${checkedUsers.length} pengguna?<br><br><span style="font-size:12px;color:var(--danger);">Tindakan ini akan mencabut seluruh akses aplikasi mereka.</span>`;
-    }
-    
-    const ok = await showConfirm('Konfirmasi Edit Akses Massal', confirmMsg, false);
-    if (!ok) return;
-    
-    const r = await apiPost({ action: 'bulkUpdateUserAccess', token: _token, userIds, appAccesses, replace: replaceMode });
-    if (r.success) { toast(r.message || `Akses berhasil diperbarui.`, 'success'); closeModal('modal-bulk-access'); await _loadUsers(); }
-    else toast(r.error || 'Gagal memperbarui akses massal.', 'error');
-  }
-
-  async function editUser(userId) {
-    const user = _allUsers.find(u => u.userId === userId);
-    if (!user) return toast('User tidak ditemukan', 'error');
-    document.getElementById('e-userid').value = user.userId;
-    document.getElementById('e-fullname').value = user.fullName;
-    document.getElementById('e-email').value = user.email;
-    document.getElementById('e-whatsapp').value = user.whatsapp || '';
-    document.getElementById('e-instansi').value = user.instansi || '';
-    document.getElementById('e-role').value = user.role;
-    document.getElementById('e-status').value = user.status;
-    const isSuperAdmin = user.role === 'SUPER_ADMIN';
-    document.getElementById('e-status-wrapper').style.display = isSuperAdmin ? 'none' : 'flex';
-    document.getElementById('e-apps-wrapper').style.display = isSuperAdmin ? 'none' : 'block';
-    const appListEl = document.getElementById('e-apps-list');
-    appListEl.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:auto;"></div>';
-    document.getElementById('modal-edit-user').classList.remove('hidden');
-    const r = await apiGet('getUserAccess', { token: _token, targetUserId: userId });
-    let userAccessMap = {};
-    if (r.success) { r.accesses.forEach(a => { userAccessMap[a.appId] = a.appRole || 'user'; }); }
-    if (_allAdminApps.length === 0) {
-      appListEl.innerHTML = '<div style="color:var(--text3);font-size:12px;">Belum ada aplikasi.</div>';
-    } else {
-      appListEl.innerHTML = _allAdminApps.map(app => `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" class="cb-app-access" value="${app.appId}" ${userAccessMap[app.appId] ? 'checked' : ''} onchange="document.getElementById('app-role-${app.appId}').disabled = !this.checked;" />
-            <i class="ti ${app.appIcon || 'ti-app'}" style="color:${app.color}"></i> ${app.appName}
-          </label>
-          <select id="app-role-${app.appId}" class="form-input" style="width:100px;padding:4px 8px;font-size:12px;" ${userAccessMap[app.appId] ? '' : 'disabled'}>
-            <option value="user" ${userAccessMap[app.appId] === 'user' ? 'selected' : ''}>User</option>
-            <option value="admin" ${userAccessMap[app.appId] === 'admin' ? 'selected' : ''}>Admin</option>
-            <option value="viewer" ${userAccessMap[app.appId] === 'viewer' ? 'selected' : ''}>Viewer</option>
-          </select>
-        </div>
-      `).join('');
-    }
-  }
-
-  async function saveEditUser() {
-    const userId = document.getElementById('e-userid').value;
-    const data = { action: 'updateUser', token: _token, targetUserId: userId, fullName: document.getElementById('e-fullname').value.trim(), email: document.getElementById('e-email').value.trim(), whatsapp: document.getElementById('e-whatsapp').value.trim(), role: document.getElementById('e-role').value, instansi: document.getElementById('e-instansi').value, status: document.getElementById('e-status').value };
-    const appAccesses = Array.from(document.querySelectorAll('.cb-app-access:checked')).map(cb => {
-      const select = document.getElementById('app-role-' + cb.value);
-      return { appId: cb.value, appRole: select ? select.value : 'user' };
-    });
-    const r = await apiPost(data);
-    if (r.success) {
-      await apiPost({ action: 'updateUserAccess', token: _token, targetUserId: userId, appAccesses });
-      toast('Perubahan berhasil disimpan.', 'success'); closeModal('modal-edit-user'); await _loadUsers();
-    } else toast(r.error || 'Gagal menyimpan.', 'error');
-  }
-
-  function editApp(appId) {
-    const app = _allAdminApps.find(a => a.appId === appId);
-    if (!app) return toast('Aplikasi tidak ditemukan', 'error');
-    document.getElementById('ea-appid').value = app.appId;
-    document.getElementById('ea-name').value = app.appName;
-    document.getElementById('ea-url').value = app.appUrl;
-    document.getElementById('ea-desc').value = app.description || '';
-    document.getElementById('ea-icon').value = app.appIcon || 'ti-apps';
-    document.getElementById('ea-color').value = app.color || '#1E90FF';
-    document.getElementById('ea-status').value = app.status || 'ACTIVE';
-    document.getElementById('modal-edit-app').classList.remove('hidden');
-  }
-
-  async function saveEditApp() {
-    const data = { action: 'updateApp', token: _token, appId: document.getElementById('ea-appid').value, appName: document.getElementById('ea-name').value.trim(), appUrl: document.getElementById('ea-url').value.trim(), description: document.getElementById('ea-desc').value.trim(), appIcon: document.getElementById('ea-icon').value.trim() || 'ti-apps', color: document.getElementById('ea-color').value, status: document.getElementById('ea-status').value };
-    const r = await apiPost(data);
-    if (r.success) { toast('Perubahan aplikasi berhasil disimpan.', 'success'); closeModal('modal-edit-app'); _apps = []; await _loadPostLogin(); await _loadAdminApps(); }
-    else toast(r.error || 'Gagal menyimpan aplikasi.', 'error');
-  }
-
-  async function deleteApp(appId, appName) {
-    const ok = await showConfirm('Hapus Aplikasi', `Hapus aplikasi "${appName}" secara permanen?`, true);
-    if (!ok) return;
-    const r = await apiPost({ action: 'deleteApp', token: _token, appId });
-    if (r.success) { toast('Aplikasi berhasil dihapus.', 'success'); _apps = []; await _loadPostLogin(); await _loadAdminApps(); }
-    else toast(r.error || 'Gagal menghapus aplikasi.', 'error');
-  }
-
-  function showForgotPassword() { toast('Hubungi administrator untuk reset password.', 'info'); }
-  function refresh() { _loadPostLogin(); toast('Data diperbarui.', 'info'); }
-
-  // ══════════════════════════════════════════════════════
-  // UI HELPERS
-  // ══════════════════════════════════════════════════════
-
-  function formatDateID(isoStr, multiline = false) {
-    if (!isoStr || isoStr === '-') return '—';
-    try {
-      const d = new Date(isoStr);
-      if (isNaN(d.getTime())) return isoStr;
-      const datePart = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
-      const timePart = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(d).replace(/\./g, ':');
-      return multiline ? `${datePart}<br>${timePart}` : `${datePart} ${timePart}`;
-    } catch(e) { return isoStr; }
-  }
-
-  function showApp() {
-    hideLoading();
-    try { localStorage.setItem('gaspol_sess_state', JSON.stringify({ state: 'alive', ts: Date.now() })); } catch(e) {}
-    document.getElementById('page-login').classList.add('hidden');
-    document.getElementById('page-app').classList.remove('hidden');
-  }
-
-  function hideLoading() { document.getElementById('loading').style.display = 'none'; }
-
-  function showConfirm(title, message, isDanger, okText, hideCancel) {
-    return new Promise((resolve) => {
-      document.getElementById('confirm-title').textContent = title;
-      document.getElementById('confirm-msg').innerHTML = message;
-      const btnOk = document.getElementById('btn-confirm-ok');
-      const btnCancel = document.getElementById('btn-confirm-cancel');
-      const iconWrap = document.getElementById('confirm-icon');
-      btnOk.textContent = okText || 'Ya, Lanjutkan';
-      btnCancel.style.display = hideCancel ? 'none' : 'inline-block';
-      if (isDanger) { btnOk.style.background = 'var(--danger)'; iconWrap.style.color = 'var(--danger)'; iconWrap.innerHTML = '<i class="ti ti-alert-triangle"></i>'; }
-      else { btnOk.style.background = 'var(--gp)'; iconWrap.style.color = 'var(--gs)'; iconWrap.innerHTML = '<i class="ti ti-info-circle"></i>'; }
-      const modal = document.getElementById('modal-confirm');
-      modal.classList.remove('hidden');
-      const onCancel = () => { modal.classList.add('hidden'); cleanup(); resolve(false); };
-      const onOk = () => { modal.classList.add('hidden'); cleanup(); resolve(true); };
-      const cleanup = () => { btnCancel.removeEventListener('click', onCancel); btnOk.removeEventListener('click', onOk); };
-      btnCancel.addEventListener('click', onCancel);
-      btnOk.addEventListener('click', onOk);
-    });
-  }
-
-  function setTopbarDate() {
-    const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('id-ID', opts);
-  }
-
-  // ══════════════════════════════════════════════════════
-  // API LAYER — KONVERSI UTAMA: google.script.run → fetch()
-  // ══════════════════════════════════════════════════════
-
-  let _asyncLoaderCount = 0;
-  function showAsyncLoader() {
-    _asyncLoaderCount++;
-    document.getElementById('global-async-loader').classList.remove('hidden');
-  }
-  function hideAsyncLoader() {
-    _asyncLoaderCount--;
-    if (_asyncLoaderCount <= 0) { _asyncLoaderCount = 0; document.getElementById('global-async-loader').classList.add('hidden'); }
-  }
-
-  /**
-   * apiPost — Menggantikan google.script.run.processServerAction()
-   * Mengirim data ke /api/portal/action via fetch()
-   * Response format identik: { success, error, ...data }
-   */
-  async function apiPost(data, showLoader = true) {
-    if (showLoader) showAsyncLoader();
-    try {
-      const resp = await fetch(API_BASE + '/api/portal/action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(data.token ? { 'Authorization': 'Bearer ' + data.token } : {}),
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (showLoader) hideAsyncLoader();
-
-      const parsed = await resp.json();
-
-      // Auto-logout jika session expired
-      if (!parsed.success && parsed.error) {
-        const errLower = String(parsed.error).toLowerCase();
-        const isAuthError = errLower.includes('tidak terautentikasi') || errLower.includes('kedaluwarsa') || errLower.includes('token sudah tidak valid') || errLower.includes('token tidak valid') || errLower.includes('tidak aktif');
-        if (isAuthError) {
-          forceLogout('Sesi Anda telah berakhir.');
-          return { success: false, error: parsed.error, _logoutTriggered: true };
-        }
-      }
-
-      return parsed;
-    } catch(err) {
-      if (showLoader) hideAsyncLoader();
-      return { success: false, error: 'Koneksi gagal: ' + err.message };
-    }
-  }
-
-  function apiGet(action, params, showLoader = false) {
-    return apiPost({ action, ...params }, showLoader);
-  }
-
-  // ── Open child app dengan SSO token ───────────────────
-  function openApp(appUrl, appId) {
-    if (!appUrl || appUrl.includes('GANTI_DEPLOYMENT')) {
-      toast('URL aplikasi belum dikonfigurasi.', 'error');
-      return;
-    }
-    // Set cookie untuk single sign-on cross-app di origin yang sama
-    document.cookie = "gaspol_token=" + _token + "; path=/; max-age=86400; secure; samesite=strict";
-    
     // Buka app tanpa parameter di URL
     window.open(appUrl, '_blank');
   }

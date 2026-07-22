@@ -24,6 +24,7 @@ router.post('/validate', authController.validateToken);
 
 // ── Protected Routes ────────────────────────────────────────
 router.post('/change-password', verifySsoToken, requireAuth, authController.changePassword);
+router.post('/heartbeat', authController.heartbeat);
 router.get('/stats', verifySsoToken, requireAuth, authController.getStats);
 
 module.exports = router;

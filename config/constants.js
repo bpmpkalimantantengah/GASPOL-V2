@@ -46,6 +46,8 @@ const SSO_CONFIG = {
   sessionDurationHours : parseInt(process.env.SESSION_DURATION_HOURS || '8'),
   maxLoginAttempts     : parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5'),
   lockoutMinutes       : parseInt(process.env.LOCKOUT_DURATION_MINUTES || '30'),
+  idleTimeoutMinutes   : parseInt(process.env.IDLE_TIMEOUT_MINUTES || '30'), // AFK/Idle limit
+  preventConcurrentLogins: process.env.PREVENT_CONCURRENT === 'false' ? false : true, // Auto kill old sessions
   timezone             : process.env.TZ || 'Asia/Makassar',
   appName              : 'GASPOL',
   version              : '2.0.0',

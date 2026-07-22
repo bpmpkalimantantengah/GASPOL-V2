@@ -109,6 +109,14 @@ exports.login = async (req, res) => {
         : [updateFields.loginAttempts, updateFields.lockedUntil, updateFields.lastLogin, updateFields.updatedAt, user.userId]
     );
 
+    // 5.5. Concurrent Login Control
+    if (SSO_CONFIG.preventConcurrentLogins) {
+      await portalPool.query(
+        `UPDATE ${TABLES.SESSIONS} SET isValid = 0 WHERE userId = ? AND isValid = 1`,
+        [user.userId]
+      );
+    }
+
     // 6. Buat session token
     const token = await _createSession(user.userId, appId);
 
@@ -169,6 +177,14 @@ exports.loginWithGoogle = async (req, res) => {
       `UPDATE ${TABLES.USERS} SET loginAttempts = 0, lockedUntil = NULL, lastLogin = ?, updatedAt = ? WHERE userId = ?`,
       [formatDate(new Date()), formatDate(new Date()), user.userId]
     );
+
+    // Concurrent Login Control
+    if (SSO_CONFIG.preventConcurrentLogins) {
+      await portalPool.query(
+        `UPDATE ${TABLES.SESSIONS} SET isValid = 0 WHERE userId = ? AND isValid = 1`,
+        [user.userId]
+      );
+    }
 
     const token = await _createSession(user.userId, appId);
     const apps = await _getAppsForUser(user.userId, user.role);
@@ -234,6 +250,29 @@ exports.validateToken = async (req, res) => {
   } catch (err) {
     console.error('[authController.validateToken] Error:', err.message);
     return res.json({ valid: false, error: 'Gagal memvalidasi token.' });
+  }
+};
+
+// ── HEARTBEAT (Update lastActivity untuk mencegah Idle Timeout) ─
+exports.heartbeat = async (req, res) => {
+  try {
+    const token = req.query?.token || req.body?.token || req.headers['x-sso-token'];
+    if (!token) return error(res, 'Token tidak disertakan.', 400);
+
+    const { formatDate } = require('../utils/helpers');
+    const [result] = await portalPool.query(
+      `UPDATE ${TABLES.SESSIONS} SET lastActivity = ? WHERE token = ? AND isValid = 1`,
+      [formatDate(new Date()), token]
+    );
+
+    if (result.affectedRows === 0) {
+      return error(res, 'Sesi tidak aktif atau tidak ditemukan.', 401);
+    }
+    
+    return success(res, { status: 'alive' });
+  } catch (err) {
+    console.error('[authController.heartbeat] Error:', err.message);
+    return error(res, 'Gagal mengirim heartbeat.', 500);
   }
 };
 

@@ -62,6 +62,15 @@ async function validateTokenFromDB(token, appId) {
       return { valid: false, error: 'Token sudah kedaluwarsa.' };
     }
 
+    // 1.5. Cek Idle Timeout
+    const lastActivity = session.lastActivity ? new Date(session.lastActivity) : new Date(session.createdAt);
+    const idleTimeMinutes = (new Date() - lastActivity) / 60000;
+    if (SSO_CONFIG.idleTimeoutMinutes && idleTimeMinutes > SSO_CONFIG.idleTimeoutMinutes) {
+      // Tandai sebagai tidak valid karena idle
+      portalPool.query(`UPDATE ${TABLES.SESSIONS} SET isValid = 0 WHERE token = ?`, [token]).catch(() => {});
+      return { valid: false, error: 'Sesi berakhir karena tidak ada aktivitas (Idle Timeout).' };
+    }
+
     // 2. Cari user
     const [users] = await portalPool.query(
       `SELECT userId, username, email, fullName, role, status, whatsapp, lastLogin, createdAt, updatedAt
