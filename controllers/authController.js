@@ -330,8 +330,9 @@ exports.getStats = async (req, res) => {
   try {
     const [userCount] = await portalPool.query(`SELECT COUNT(*) as total FROM ${TABLES.USERS}`);
     const [appCount] = await portalPool.query(`SELECT COUNT(*) as total FROM ${TABLES.APPS}`);
+    const nowStr = formatDate(new Date());
     const [sessionCount] = await portalPool.query(
-      `SELECT COUNT(DISTINCT userId) as total FROM ${TABLES.SESSIONS} WHERE isValid = 1 AND expiresAt > NOW()`
+      `SELECT COUNT(DISTINCT userId) as total FROM ${TABLES.SESSIONS} WHERE isValid = 1 AND expiresAt > ?`, [nowStr]
     );
     const [recentLogs] = await portalPool.query(
       `SELECT * FROM ${TABLES.AUDIT_LOG} ORDER BY timestamp DESC LIMIT 10`

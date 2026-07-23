@@ -12,8 +12,9 @@ const { success, error } = require('../utils/response');
 // ── GET ACTIVE SESSIONS COUNT ───────────────────────────────
 exports.getActiveSessions = async (req, res) => {
   try {
+    const nowStr = formatDate(new Date());
     const [result] = await portalPool.query(
-      `SELECT COUNT(DISTINCT userId) as total FROM ${TABLES.SESSIONS} WHERE isValid = 1 AND expiresAt > NOW()`
+      `SELECT COUNT(DISTINCT userId) as total FROM ${TABLES.SESSIONS} WHERE isValid = 1 AND expiresAt > ?`, [nowStr]
     );
     return success(res, { count: result[0].total });
   } catch (err) {
@@ -31,6 +32,7 @@ exports.getOnlineUsers = async (req, res) => {
     }
 
     // Query langsung JOIN — jauh lebih efisien daripada GAS yang harus getAll 3 tabel
+    const nowStr = formatDate(new Date());
     const [onlineUsers] = await portalPool.query(`
       SELECT 
         s.token, s.userId, s.appId, s.lastActivity, s.createdAt as sessionCreatedAt, s.userAgent,
@@ -39,9 +41,9 @@ exports.getOnlineUsers = async (req, res) => {
       FROM ${TABLES.SESSIONS} s
       LEFT JOIN ${TABLES.USERS} u ON s.userId = u.userId
       LEFT JOIN ${TABLES.APPS} a ON s.appId = a.appId
-      WHERE s.isValid = 1 AND s.expiresAt > NOW()
+      WHERE s.isValid = 1 AND s.expiresAt > ?
       ORDER BY s.lastActivity DESC
-    `);
+    `, [nowStr]);
 
     // Kelompokkan per userId — ambil sesi terbaru per user
     const uniqueMap = {};
@@ -97,8 +99,9 @@ exports.invalidateSession = async (req, res) => {
 // Port dari SessionManager.cleanExpiredSessions() GAS
 async function cleanExpiredSessions() {
   try {
+    const nowStr = formatDate(new Date());
     const [result] = await portalPool.query(
-      `UPDATE ${TABLES.SESSIONS} SET isValid = 0 WHERE isValid = 1 AND expiresAt < NOW()`
+      `UPDATE ${TABLES.SESSIONS} SET isValid = 0 WHERE isValid = 1 AND expiresAt < ?`, [nowStr]
     );
     console.log(`[SessionCron] Membersihkan ${result.affectedRows} sesi kedaluwarsa.`);
     return result.affectedRows;
